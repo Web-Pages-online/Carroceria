@@ -110,7 +110,9 @@ export class PedidoController {
       const id = parseInt(req.params.id as string);
       const pedido = await pedidoService.obtenerPorId(id) as any;
 
-      const precioBase = parseFloat(pedido.tipo_carroceria?.precio_base ?? 0);
+      const precioBase = pedido.importe != null
+        ? parseFloat(pedido.importe)
+        : parseFloat(pedido.tipo_carroceria?.precio_base ?? 0);
       const subtotal   = precioBase;
       const iva        = subtotal * IVA;
       const total      = subtotal + iva;
@@ -205,7 +207,9 @@ export class PedidoController {
         return res.status(400).json({ error: 'Solo se puede generar el recibo para pedidos terminados o entregados.' });
       }
 
-      const precioBase = parseFloat(pedido.tipo_carroceria?.precio_base ?? 0);
+      const precioBase = pedido.importe != null
+        ? parseFloat(pedido.importe)
+        : parseFloat(pedido.tipo_carroceria?.precio_base ?? 0);
       const iva        = precioBase * IVA;
       const total      = precioBase + iva;
 

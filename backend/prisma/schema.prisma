@@ -77,6 +77,8 @@ model RecetaCarroceria {
   cantidadNecesaria Float
   tipoCarroceria    TipoCarroceria @relation(fields: [tipoCarroceriaId], references: [id], onDelete: Cascade)
   material          Material       @relation(fields: [materialId], references: [id])
+
+  @@unique([tipoCarroceriaId, materialId])
 }
 
 model Pedido {

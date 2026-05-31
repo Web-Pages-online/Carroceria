@@ -30,7 +30,9 @@ async function fetchPedido(id: number) {
 export async function descargarCotizacion(pedidoId: number) {
   const pedido = await fetchPedido(pedidoId);
 
-  const precioBase = parseFloat(pedido.tipo_carroceria?.precio_base ?? 0);
+  const precioBase = pedido.importe != null
+    ? parseFloat(pedido.importe)
+    : parseFloat(pedido.tipo_carroceria?.precio_base ?? 0);
   const iva        = precioBase * IVA;
   const total      = precioBase + iva;
 
