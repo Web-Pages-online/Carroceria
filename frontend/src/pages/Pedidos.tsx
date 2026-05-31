@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, MoreVertical, Edit2, Trash2, Calendar, FileText } from 'lucide-react';
-import { getPedidos, crearPedido, getAgencias, getTiposCarroceria } from '../api/pedidos';
+import { Search, Plus, MoreVertical, Trash2, Calendar, FileText, Mail, Edit2 } from 'lucide-react';
+import { getPedidos, crearPedido, actualizarPedido, enviarReciboPorCorreo, getAgencias } from '../api/pedidos';
 import Modal from '../components/Modal';
 import Swal from 'sweetalert2';
 import axios from 'axios';
+import { descargarCotizacion } from '../utils/documentos';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const Pedidos = () => {
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [agencias, setAgencias] = useState<any[]>([]);
-  const [tipos, setTipos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Dropdown de fila
@@ -19,18 +19,19 @@ const Pedidos = () => {
 
   // Estados del Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen]   = useState(false);
+  const [editingId, setEditingId]     = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({ agencia_id: '', tipo_carroceria_id: '' });
+  const emptyForm = { agencia_id: '', tipo_vehiculo: '', cantidad: '1', importe: '', ancho: '', largo: '', fecha_entrega_est: '', notas_taller: '' };
+  const [form, setForm]     = useState(emptyForm);
+  const [editForm, setEditForm] = useState(emptyForm);
 
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const [dataPedidos, dataAgencias, dataTipos] = await Promise.all([
-        getPedidos(), getAgencias(), getTiposCarroceria()
-      ]);
+      const [dataPedidos, dataAgencias] = await Promise.all([getPedidos(), getAgencias()]);
       setPedidos(dataPedidos);
       setAgencias(dataAgencias);
-      setTipos(dataTipos);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -46,7 +47,7 @@ const Pedidos = () => {
   }, []);
 
   const handleOpenCreate = () => {
-    setForm({ agencia_id: '', tipo_carroceria_id: '' });
+    setForm(emptyForm);
     setIsModalOpen(true);
   };
 
@@ -93,8 +94,14 @@ const Pedidos = () => {
     setIsSubmitting(true);
     try {
       await crearPedido({
-        agencia_id: parseInt(form.agencia_id),
-        tipo_carroceria_id: parseInt(form.tipo_carroceria_id)
+        agencia_id:        parseInt(form.agencia_id),
+        tipo_vehiculo:     form.tipo_vehiculo   || undefined,
+        cantidad:          parseInt(form.cantidad) || 1,
+        importe:           form.importe           ? parseFloat(form.importe)          : undefined,
+        ancho:             form.ancho             ? parseFloat(form.ancho)            : undefined,
+        largo:             form.largo             ? parseFloat(form.largo)            : undefined,
+        fecha_entrega_est: form.fecha_entrega_est || undefined,
+        notas_taller:      form.notas_taller     || undefined,
       });
       Swal.fire({
         title: 'Pedido Creado',
@@ -110,6 +117,48 @@ const Pedidos = () => {
       cargarDatos();
     } catch (error: any) {
       Swal.fire('Error', error.response?.data?.error || 'No se pudo crear el pedido', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenEdit = (pedido: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpenDropdownId(null);
+    setEditingId(pedido.id);
+    setEditForm({
+      agencia_id:        pedido.agencia_id?.toString() ?? '',
+      tipo_vehiculo:     pedido.tipo_vehiculo     ?? '',
+      cantidad:          pedido.cantidad?.toString() ?? '1',
+      importe:           pedido.importe != null ? parseFloat(pedido.importe).toString() : '',
+      ancho:             pedido.ancho  != null ? pedido.ancho.toString()  : '',
+      largo:             pedido.largo  != null ? pedido.largo.toString()  : '',
+      fecha_entrega_est: pedido.fecha_entrega_est ? new Date(pedido.fecha_entrega_est).toISOString().split('T')[0] : '',
+      notas_taller:      pedido.notas_taller ?? '',
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingId) return;
+    setIsSubmitting(true);
+    try {
+      await actualizarPedido(editingId, {
+        agencia_id:        parseInt(editForm.agencia_id),
+        tipo_vehiculo:     editForm.tipo_vehiculo     || undefined,
+        cantidad:          parseInt(editForm.cantidad) || 1,
+        importe:           editForm.importe           ? parseFloat(editForm.importe)  : '',
+        ancho:             editForm.ancho             ? parseFloat(editForm.ancho)    : '',
+        largo:             editForm.largo             ? parseFloat(editForm.largo)    : '',
+        fecha_entrega_est: editForm.fecha_entrega_est || undefined,
+        notas_taller:      editForm.notas_taller      || undefined,
+      });
+      Swal.fire({ title: 'Pedido actualizado', icon: 'success', background: '#171717', color: '#fff', confirmButtonColor: '#f97316', timer: 1800, showConfirmButton: false });
+      setIsEditOpen(false);
+      cargarDatos();
+    } catch (error: any) {
+      Swal.fire('Error', error.response?.data?.error || 'No se pudo actualizar', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -159,9 +208,11 @@ const Pedidos = () => {
               <tr>
                 <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800">Folio</th>
                 <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800">Agencia</th>
-                <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800">Tipo de Carrocería</th>
+                <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800">Vehículo</th>
+                <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800">Cant.</th>
+                <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800">Importe</th>
                 <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800">Estado</th>
-                <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800">Fecha Creado</th>
+                <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800">Entrega Est.</th>
                 <th className="px-6 py-4 text-xs font-semibold text-neutral-400 tracking-wider uppercase border-b border-neutral-800 text-right">Acciones</th>
               </tr>
             </thead>
@@ -181,7 +232,17 @@ const Pedidos = () => {
                     <span className="text-sm font-medium text-white">{pedido.agencia?.nombre || 'Desconocida'}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-neutral-300">{pedido.tipo_carroceria?.nombre || 'N/A'}</span>
+                    <span className="text-sm text-neutral-300">{pedido.tipo_vehiculo || '—'}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="text-sm text-neutral-300">{pedido.cantidad ?? 1}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-neutral-300">
+                      {pedido.importe != null
+                        ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(parseFloat(pedido.importe))
+                        : '—'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(pedido.estado)}
@@ -189,11 +250,11 @@ const Pedidos = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2 text-sm text-neutral-400">
                       <Calendar className="w-4 h-4" />
-                      <span>{new Date(pedido.fecha_creacion).toLocaleDateString()}</span>
+                      <span>{pedido.fecha_entrega_est ? new Date(pedido.fecha_entrega_est).toLocaleDateString() : '—'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right relative">
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenDropdownId(openDropdownId === pedido.id ? null : pedido.id);
@@ -202,21 +263,70 @@ const Pedidos = () => {
                     >
                       <MoreVertical className="w-5 h-5" />
                     </button>
-                    
+
                     <AnimatePresence>
                       {openDropdownId === pedido.id && (
-                        <motion.div 
+                        <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.95 }}
                           transition={{ duration: 0.1 }}
-                          className="absolute right-10 top-0 w-36 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-20 overflow-hidden"
+                          className="absolute right-10 top-0 w-48 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-20 overflow-hidden"
                         >
-                          <button 
-                            onClick={(e) => handleDelete(pedido.id, e)}
-                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-neutral-800 hover:text-red-300 flex items-center"
+                          {/* Editar */}
+                          <button
+                            onClick={(e) => handleOpenEdit(pedido, e)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white flex items-center gap-2"
                           >
-                            <Trash2 className="w-4 h-4 mr-2" /> Eliminar
+                            <Edit2 className="w-4 h-4 text-orange-400" />
+                            Editar
+                          </button>
+
+                          <div className="border-t border-neutral-800" />
+
+                          {/* Cotización — siempre disponible */}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setOpenDropdownId(null);
+                              try {
+                                await descargarCotizacion(pedido.id);
+                              } catch (err: any) {
+                                Swal.fire({ title: 'Error', text: err.message, icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' });
+                              }
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white flex items-center gap-2"
+                          >
+                            <FileText className="w-4 h-4 text-blue-400" />
+                            Cotización
+                          </button>
+
+                          {/* Enviar recibo por correo */}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setOpenDropdownId(null);
+                              try {
+                                const res = await enviarReciboPorCorreo(pedido.id);
+                                Swal.fire({ title: '¡Correo enviado!', text: res.message, icon: 'success', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' });
+                              } catch (err: any) {
+                                Swal.fire({ title: 'Error', text: err.response?.data?.error || err.message, icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' });
+                              }
+                            }}
+                            disabled={!['TERMINADO', 'ENTREGADO'].includes(pedido.estado)}
+                            className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-800 hover:text-white text-neutral-300"
+                          >
+                            <Mail className="w-4 h-4 text-blue-400" />
+                            Enviar recibo por correo
+                          </button>
+
+                          <div className="border-t border-neutral-800" />
+
+                          <button
+                            onClick={(e) => handleDelete(pedido.id, e)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-neutral-800 hover:text-red-300 flex items-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" /> Eliminar
                           </button>
                         </motion.div>
                       )}
@@ -237,50 +347,182 @@ const Pedidos = () => {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Levantar Nuevo Pedido">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Agencia */}
           <div>
             <label className="block text-sm font-medium text-neutral-400 mb-1">Agencia (Cliente)</label>
-            <select 
+            <select
               value={form.agencia_id}
-              onChange={e => setForm({...form, agencia_id: e.target.value})}
+              onChange={e => setForm({ ...form, agencia_id: e.target.value })}
               className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all"
               required
             >
               <option value="">Selecciona una agencia...</option>
-              {agencias.map(a => (
-                <option key={a.id} value={a.id}>{a.nombre}</option>
-              ))}
+              {agencias.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
             </select>
           </div>
 
+          {/* Tipo de vehículo */}
           <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-1">Tipo de Carrocería</label>
-            <select 
-              value={form.tipo_carroceria_id}
-              onChange={e => setForm({...form, tipo_carroceria_id: e.target.value})}
-              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all"
-              required
-            >
-              <option value="">Selecciona un tipo...</option>
-              {tipos.map(t => (
-                <option key={t.id} value={t.id}>{t.nombre}</option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Tipo de vehículo</label>
+            <input
+              type="text"
+              value={form.tipo_vehiculo}
+              onChange={e => setForm({ ...form, tipo_vehiculo: e.target.value })}
+              placeholder="Ej. Camión de 3.5 ton, Nissan NP300..."
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600"
+            />
           </div>
 
-          <div className="pt-4 flex space-x-3">
-            <button 
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors"
-            >
+          {/* Medidas */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Medidas de la carrocería</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative">
+                <input
+                  type="number" min="0" step="0.01"
+                  value={form.ancho}
+                  onChange={e => setForm({ ...form, ancho: e.target.value })}
+                  placeholder="Ancho"
+                  className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 pr-12 outline-none focus:border-orange-500 transition-all placeholder-neutral-600"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">metros</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="number" min="0" step="0.01"
+                  value={form.largo}
+                  onChange={e => setForm({ ...form, largo: e.target.value })}
+                  placeholder="Largo"
+                  className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 pr-12 outline-none focus:border-orange-500 transition-all placeholder-neutral-600"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">metros</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cantidad e Importe en la misma fila */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Cantidad</label>
+              <input
+                type="number" min="1" step="1"
+                value={form.cantidad}
+                onChange={e => setForm({ ...form, cantidad: e.target.value })}
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Importe acordado</label>
+              <input
+                type="number" min="0" step="0.01"
+                value={form.importe}
+                onChange={e => setForm({ ...form, importe: e.target.value })}
+                placeholder="$0.00"
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600"
+              />
+            </div>
+          </div>
+
+          {/* Fecha de entrega estimada */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Fecha de entrega estimada</label>
+            <input
+              type="date"
+              value={form.fecha_entrega_est}
+              onChange={e => setForm({ ...form, fecha_entrega_est: e.target.value })}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all [color-scheme:dark]"
+            />
+          </div>
+
+          {/* Notas */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Notas / Descripción del trabajo</label>
+            <textarea
+              value={form.notas_taller}
+              onChange={e => setForm({ ...form, notas_taller: e.target.value })}
+              placeholder="Especificaciones, medidas, color, materiales especiales..."
+              rows={3}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600 resize-none"
+            />
+          </div>
+
+          <div className="pt-2 flex space-x-3">
+            <button type="button" onClick={() => setIsModalOpen(false)}
+              className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">
               Cancelar
             </button>
-            <button 
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-500 transition-colors disabled:opacity-50"
-            >
+            <button type="submit" disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-500 transition-colors disabled:opacity-50">
               {isSubmitting ? 'Guardando...' : 'Crear Pedido'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+      {/* Modal editar pedido */}
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Editar Pedido">
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Agencia (Cliente)</label>
+            <select value={editForm.agencia_id} onChange={e => setEditForm({ ...editForm, agencia_id: e.target.value })}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all" required>
+              <option value="">Selecciona una agencia...</option>
+              {agencias.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Tipo de vehículo</label>
+            <input type="text" value={editForm.tipo_vehiculo} onChange={e => setEditForm({ ...editForm, tipo_vehiculo: e.target.value })}
+              placeholder="Ej. Camión de 3.5 ton, Nissan NP300..."
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Medidas de la carrocería</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative">
+                <input type="number" min="0" step="0.01" value={editForm.ancho} onChange={e => setEditForm({ ...editForm, ancho: e.target.value })}
+                  placeholder="Ancho"
+                  className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 pr-12 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">metros</span>
+              </div>
+              <div className="relative">
+                <input type="number" min="0" step="0.01" value={editForm.largo} onChange={e => setEditForm({ ...editForm, largo: e.target.value })}
+                  placeholder="Largo"
+                  className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 pr-12 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">metros</span>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Cantidad</label>
+              <input type="number" min="1" step="1" value={editForm.cantidad} onChange={e => setEditForm({ ...editForm, cantidad: e.target.value })}
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Importe acordado</label>
+              <input type="number" min="0" step="0.01" value={editForm.importe} onChange={e => setEditForm({ ...editForm, importe: e.target.value })}
+                placeholder="$0.00"
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Fecha de entrega estimada</label>
+            <input type="date" value={editForm.fecha_entrega_est} onChange={e => setEditForm({ ...editForm, fecha_entrega_est: e.target.value })}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all [color-scheme:dark]" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Notas / Descripción del trabajo</label>
+            <textarea value={editForm.notas_taller} onChange={e => setEditForm({ ...editForm, notas_taller: e.target.value })}
+              placeholder="Especificaciones, medidas, color, materiales especiales..."
+              rows={3}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600 resize-none" />
+          </div>
+          <div className="pt-2 flex space-x-3">
+            <button type="button" onClick={() => setIsEditOpen(false)}
+              className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">Cancelar</button>
+            <button type="submit" disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-500 transition-colors disabled:opacity-50">
+              {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>
         </form>

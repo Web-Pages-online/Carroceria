@@ -34,6 +34,14 @@ export class PedidoRepository {
     });
   }
 
+  async update(id: number, data: Prisma.PedidoUncheckedUpdateInput) {
+    return await prisma.pedido.update({
+      where: { id },
+      data,
+      include: { agencia: true, tipo_carroceria: true },
+    });
+  }
+
   async updateEstado(id: number, estado: string, fecha_entrega?: Date) {
     return await prisma.pedido.update({
       where: { id },

@@ -44,10 +44,11 @@ model Agencia {
   id        Int       @id @default(autoincrement())
   nombre    String
   contacto  String
+  email     String?
   telefono  String
   direccion String?
-  latitud   Float?   // Para el mapa (Leaflet)
-  longitud  Float?   // Para el mapa (Leaflet)
+  latitud   Float?
+  longitud  Float?
   usuarios  Usuario[]
   pedidos   Pedido[]
 }
@@ -77,17 +78,25 @@ model RecetaCarroceria {
   cantidadNecesaria Float
   tipoCarroceria    TipoCarroceria @relation(fields: [tipoCarroceriaId], references: [id], onDelete: Cascade)
   material          Material       @relation(fields: [materialId], references: [id])
+
+  @@unique([tipoCarroceriaId, materialId])
 }
 
 model Pedido {
-  id                 Int            @id @default(autoincrement())
+  id                 Int             @id @default(autoincrement())
   agencia_id         Int
-  tipo_carroceria_id Int
-  estado             String         @default("PENDIENTE") // PENDIENTE, EN_PROCESO, TERMINADO, ENTREGADO
-  fecha_creacion     DateTime       @default(now())
+  tipo_carroceria_id Int?
+  estado             String          @default("PENDIENTE") // PENDIENTE, EN_PROCESO, TERMINADO, ENTREGADO
+  fecha_creacion     DateTime        @default(now())
   fecha_entrega      DateTime?
+  fecha_entrega_est  DateTime?
   notas_taller       String?
-  
-  agencia            Agencia        @relation(fields: [agencia_id], references: [id])
-  tipo_carroceria    TipoCarroceria @relation(fields: [tipo_carroceria_id], references: [id])
+  tipo_vehiculo      String?
+  cantidad           Int             @default(1)
+  importe            Decimal?        @db.Decimal(10, 2)
+  ancho              Float?
+  largo              Float?
+
+  agencia            Agencia         @relation(fields: [agencia_id], references: [id])
+  tipo_carroceria    TipoCarroceria? @relation(fields: [tipo_carroceria_id], references: [id])
 }

@@ -12,8 +12,8 @@ export class PedidoService {
   }
 
   async crearPedido(data: Prisma.PedidoUncheckedCreateInput) {
-    if (!data.agencia_id || !data.tipo_carroceria_id) {
-      throw new Error('La agencia y el tipo de carrocería son obligatorios.');
+    if (!data.agencia_id) {
+      throw new Error('La agencia es obligatoria.');
     }
     return await this.pedidoRepository.create(data);
   }
@@ -28,6 +28,11 @@ export class PedidoService {
       throw new Error(`No se encontró el pedido con id ${id}`);
     }
     return pedido;
+  }
+
+  async actualizarPedido(id: number, data: any) {
+    await this.obtenerPorId(id);
+    return await this.pedidoRepository.update(id, data);
   }
 
   async actualizarEstado(id: number, estado: string, fecha_entrega?: string) {

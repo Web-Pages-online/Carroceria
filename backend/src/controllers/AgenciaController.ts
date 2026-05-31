@@ -15,8 +15,8 @@ export class AgenciaController {
 
   static async crear(req: Request, res: Response) {
     try {
-      const { nombre, direccion, telefono, contacto, latitud, longitud } = req.body;
-      const agencia = await agenciaService.crear({ nombre, direccion, telefono, contacto, latitud, longitud });
+      const { nombre, direccion, telefono, contacto, email, latitud, longitud } = req.body;
+      const agencia = await agenciaService.crear({ nombre, direccion, telefono, contacto, email, latitud, longitud });
       res.status(201).json(agencia);
     } catch (error: any) {
       res.status(400).json({ error: error.message || 'Error al crear la agencia' });
@@ -26,8 +26,8 @@ export class AgenciaController {
   static async actualizar(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id);
-      const { nombre, direccion, telefono, contacto, latitud, longitud } = req.body;
-      const agencia = await agenciaService.actualizar(id, { nombre, direccion, telefono, contacto, latitud, longitud });
+      const { nombre, direccion, telefono, contacto, email, latitud, longitud } = req.body;
+      const agencia = await agenciaService.actualizar(id, { nombre, direccion, telefono, contacto, email, latitud, longitud });
       res.json(agencia);
     } catch (error: any) {
       res.status(400).json({ error: error.message || 'Error al actualizar la agencia' });
