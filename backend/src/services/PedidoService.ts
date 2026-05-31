@@ -1,11 +1,14 @@
 import { PedidoRepository } from '../repositories/PedidoRepository';
+import { MaterialService } from './MaterialService';
 import { Prisma } from '@prisma/client';
 
 export class PedidoService {
   private pedidoRepository: PedidoRepository;
+  private materialService: MaterialService;
 
   constructor() {
     this.pedidoRepository = new PedidoRepository();
+    this.materialService = new MaterialService();
   }
 
   async crearPedido(data: Prisma.PedidoUncheckedCreateInput) {
@@ -28,9 +31,13 @@ export class PedidoService {
   }
 
   async actualizarEstado(id: number, estado: string, fecha_entrega?: string) {
-    // Regla de Negocio: Si el estado es ENTREGADO, necesita fecha_entrega
     if (estado === 'ENTREGADO' && !fecha_entrega) {
       throw new Error('Un pedido entregado debe tener una fecha de entrega.');
+    }
+
+    if (estado === 'EN_PROCESO') {
+      const pedido = await this.obtenerPorId(id);
+      await this.materialService.verificarYDescontarStock(pedido.tipo_carroceria_id);
     }
 
     const fechaObj = fecha_entrega ? new Date(fecha_entrega) : undefined;

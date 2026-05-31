@@ -53,11 +53,30 @@ model Agencia {
 }
 
 model TipoCarroceria {
-  id          Int      @id @default(autoincrement())
+  id          Int                @id @default(autoincrement())
   nombre      String
   descripcion String?
-  precio_base Decimal  @db.Decimal(10, 2)
+  precio_base Decimal            @db.Decimal(10, 2)
   pedidos     Pedido[]
+  recetas     RecetaCarroceria[]
+}
+
+model Material {
+  id           Int                @id @default(autoincrement())
+  nombre       String
+  unidadMedida String
+  stockActual  Float              @default(0)
+  stockMinimo  Float              @default(0)
+  recetas      RecetaCarroceria[]
+}
+
+model RecetaCarroceria {
+  id                Int            @id @default(autoincrement())
+  tipoCarroceriaId  Int
+  materialId        Int
+  cantidadNecesaria Float
+  tipoCarroceria    TipoCarroceria @relation(fields: [tipoCarroceriaId], references: [id], onDelete: Cascade)
+  material          Material       @relation(fields: [materialId], references: [id])
 }
 
 model Pedido {

@@ -9,6 +9,7 @@ import Users from './pages/settings/Users';
 import Roles from './pages/settings/Roles';
 import Permisos from './pages/settings/Permisos';
 import Perfil from './pages/Perfil';
+import Inventario from './pages/Inventario';
 import { useAuth } from './context/AuthContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -40,6 +41,7 @@ function App() {
         <Route path="/agencias" element={<ProtectedRoute><Agencias /></ProtectedRoute>} />
         
         <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+        <Route path="/inventario" element={<ProtectedRoute><Inventario /></ProtectedRoute>} />
 
         {/* Settings Routes - Solo Admin */}
         <Route path="/settings/users" element={<AdminRoute><Users /></AdminRoute>} />

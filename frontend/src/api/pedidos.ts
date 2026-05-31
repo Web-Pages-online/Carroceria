@@ -70,3 +70,40 @@ export const eliminarTipoCarroceria = async (id: number) => {
   const response = await api.delete(`/tipos-carroceria/${id}`);
   return response.data;
 };
+
+export const deletePedido = async (id: number) => {
+  const response = await api.delete(`/pedidos/${id}`);
+  return response.data;
+};
+
+// Materiales
+export const getMateriales = async () => {
+  const response = await api.get('/materiales');
+  return response.data;
+};
+
+export const crearMaterial = async (data: any) => {
+  const response = await api.post('/materiales', data);
+  return response.data;
+};
+
+export const actualizarMaterial = async (id: number, data: any) => {
+  const response = await api.put(`/materiales/${id}`, data);
+  return response.data;
+};
+
+export const eliminarMaterial = async (id: number) => {
+  const response = await api.delete(`/materiales/${id}`);
+  return response.data;
+};
+
+// Receta
+export const getReceta = async (tipoCarroceriaId: number) => {
+  const response = await api.get(`/materiales/receta/${tipoCarroceriaId}`);
+  return response.data;
+};
+
+export const guardarReceta = async (tipoCarroceriaId: number, items: { materialId: number; cantidadNecesaria: number }[]) => {
+  const response = await api.post(`/materiales/receta/${tipoCarroceriaId}`, { items });
+  return response.data;
+};
