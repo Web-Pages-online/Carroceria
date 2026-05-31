@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Clock, Loader, CheckCircle, Truck, AlertCircle, Plus, Filter, X, ChevronDown } from 'lucide-react';
+import { Clock, Loader, CheckCircle, Truck, AlertCircle, Plus, Filter, X, ChevronDown, Search } from 'lucide-react';
 import { getPedidos, crearPedido, getAgencias, getTiposCarroceria, actualizarEstadoPedido } from '../api/pedidos';
 import Modal from '../components/Modal';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -12,7 +12,7 @@ const COLUMNAS = [
   { id: 'ENTREGADO',  titulo: 'Entregados', icono: <Truck className="w-5 h-5 text-orange-400" />,   color: 'border-orange-500/30'  },
 ];
 
-const emptyFiltros = { agenciaId: '', fechaDesde: '', fechaHasta: '' };
+const emptyFiltros = { agenciaId: '', fechaDesde: '', fechaHasta: '', busqueda: '' };
 
 const Dashboard = () => {
   const [pedidos, setPedidos]   = useState<any[]>([]);
@@ -28,7 +28,7 @@ const Dashboard = () => {
   const [filtros, setFiltros]         = useState(emptyFiltros);
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
-  const hayFiltros = filtros.agenciaId !== '' || filtros.fechaDesde !== '' || filtros.fechaHasta !== '';
+  const hayFiltros = filtros.agenciaId !== '' || filtros.fechaDesde !== '' || filtros.fechaHasta !== '' || filtros.busqueda !== '';
 
   const pedidosFiltrados = useMemo(() => {
     return pedidos.filter((p) => {
@@ -44,6 +44,14 @@ const Dashboard = () => {
         const hasta = new Date(filtros.fechaHasta);
         hasta.setHours(23, 59, 59, 999);
         if (fecha > hasta) return false;
+      }
+      if (filtros.busqueda) {
+        const q = filtros.busqueda.toLowerCase();
+        const coincide =
+          p.agencia?.nombre?.toLowerCase().includes(q) ||
+          p.tipo_carroceria?.nombre?.toLowerCase().includes(q) ||
+          p.id.toString().includes(q);
+        if (!coincide) return false;
       }
       return true;
     });
@@ -136,32 +144,62 @@ const Dashboard = () => {
         </button>
       </div>
 
-      {/* Barra de filtros */}
+      {/* Barra de búsqueda + filtros */}
       <div className="mb-6 bg-neutral-900/40 border border-neutral-800 rounded-2xl overflow-hidden">
-        <button
-          onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
-          className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-neutral-800/40 transition-colors"
-        >
-          <div className="flex items-center space-x-2 text-sm font-medium text-neutral-300">
-            <Filter className="w-4 h-4 text-orange-400" />
-            <span>Filtros</span>
-            {hayFiltros && (
-              <span className="px-2 py-0.5 bg-orange-500/20 text-orange-400 text-xs rounded-full border border-orange-500/30">
-                Activos
-              </span>
-            )}
-            {hayFiltros && (
-              <span className="text-xs text-neutral-500">
-                — {pedidosFiltrados.length} de {pedidos.length} pedidos
-              </span>
-            )}
+        {/* Fila principal: buscador + botón filtros */}
+        <div className="flex items-center gap-3 px-4 py-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
+            <input
+              type="text"
+              value={filtros.busqueda}
+              onChange={e => setFiltros({ ...filtros, busqueda: e.target.value })}
+              placeholder="Buscar pedido, agencia, carrocería..."
+              className="w-full pl-9 pr-4 py-2.5 bg-neutral-800/60 border border-neutral-700/50 rounded-xl text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500/50 focus:bg-neutral-800 transition-all"
+            />
           </div>
-          <ChevronDown className={`w-4 h-4 text-neutral-500 transition-transform duration-200 ${filtrosAbiertos ? 'rotate-180' : ''}`} />
-        </button>
 
+          <button
+            onClick={() => setFiltrosAbiertos(!filtrosAbiertos)}
+            className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors shrink-0 ${
+              filtrosAbiertos || (hayFiltros && filtros.busqueda !== filtros.busqueda)
+                ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                : filtros.agenciaId || filtros.fechaDesde || filtros.fechaHasta
+                ? 'bg-orange-500/10 text-orange-400 border-orange-500/30'
+                : 'bg-neutral-800 text-neutral-400 border-neutral-700 hover:text-white hover:border-neutral-600'
+            }`}
+          >
+            <Filter className="w-4 h-4" />
+            <span>Filtros</span>
+            {(filtros.agenciaId || filtros.fechaDesde || filtros.fechaHasta) && (
+              <span className="w-2 h-2 rounded-full bg-orange-400"></span>
+            )}
+            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${filtrosAbiertos ? 'rotate-180' : ''}`} />
+          </button>
+
+          {hayFiltros && (
+            <button
+              onClick={() => setFiltros(emptyFiltros)}
+              title="Limpiar todo"
+              className="p-2.5 rounded-xl bg-neutral-800 hover:bg-red-500/10 text-neutral-400 hover:text-red-400 border border-neutral-700 hover:border-red-500/30 transition-colors shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Contador cuando hay filtros activos */}
+        {hayFiltros && (
+          <div className="px-4 pb-2 -mt-1">
+            <span className="text-xs text-neutral-500">
+              Mostrando <span className="text-orange-400 font-medium">{pedidosFiltrados.length}</span> de {pedidos.length} pedidos
+            </span>
+          </div>
+        )}
+
+        {/* Panel de filtros expandible */}
         <div className={`transition-all duration-300 overflow-hidden ${filtrosAbiertos ? 'max-h-40' : 'max-h-0'}`}>
-          <div className="px-5 pb-4 pt-1 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-neutral-800">
-            {/* Filtro por agencia */}
+          <div className="px-4 pb-4 pt-2 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-neutral-800">
             <div>
               <label className="block text-xs font-medium text-neutral-500 mb-1.5">Agencia</label>
               <select
@@ -170,13 +208,9 @@ const Dashboard = () => {
                 className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 transition-colors"
               >
                 <option value="">Todas las agencias</option>
-                {agencias.map(a => (
-                  <option key={a.id} value={a.id}>{a.nombre}</option>
-                ))}
+                {agencias.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
               </select>
             </div>
-
-            {/* Filtro desde */}
             <div>
               <label className="block text-xs font-medium text-neutral-500 mb-1.5">Desde</label>
               <input
@@ -186,27 +220,14 @@ const Dashboard = () => {
                 className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 transition-colors [color-scheme:dark]"
               />
             </div>
-
-            {/* Filtro hasta */}
             <div>
               <label className="block text-xs font-medium text-neutral-500 mb-1.5">Hasta</label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="date"
-                  value={filtros.fechaHasta}
-                  onChange={e => setFiltros({ ...filtros, fechaHasta: e.target.value })}
-                  className="flex-1 bg-neutral-800 border border-neutral-700 text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 transition-colors [color-scheme:dark]"
-                />
-                {hayFiltros && (
-                  <button
-                    onClick={() => setFiltros(emptyFiltros)}
-                    title="Limpiar filtros"
-                    className="p-2 rounded-lg bg-neutral-800 hover:bg-red-500/20 text-neutral-400 hover:text-red-400 border border-neutral-700 hover:border-red-500/30 transition-colors"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
+              <input
+                type="date"
+                value={filtros.fechaHasta}
+                onChange={e => setFiltros({ ...filtros, fechaHasta: e.target.value })}
+                className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-orange-500 transition-colors [color-scheme:dark]"
+              />
             </div>
           </div>
         </div>
