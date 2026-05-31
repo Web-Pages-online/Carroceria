@@ -93,6 +93,7 @@ model RegistroTrabajo {
   id          Int      @id @default(autoincrement())
   empleado_id Int
   descripcion String
+  cantidad    Int      @default(1)
   fecha       DateTime @default(now())
   empleado    Empleado @relation(fields: [empleado_id], references: [id], onDelete: Cascade)
 }

@@ -44,9 +44,9 @@ export class EmpleadoController {
   static async agregarRegistro(req: Request, res: Response) {
     try {
       const empleado_id = parseInt(req.params.id as string);
-      const { descripcion, fecha } = req.body;
+      const { descripcion, cantidad, fecha } = req.body;
       if (!descripcion) return res.status(400).json({ error: 'La descripción es obligatoria' });
-      res.status(201).json(await repo.agregarRegistro({ empleado_id, descripcion, fecha }));
+      res.status(201).json(await repo.agregarRegistro({ empleado_id, descripcion, cantidad: Number(cantidad) || 1, fecha }));
     } catch (e: any) { res.status(400).json({ error: e.message }); }
   }
 

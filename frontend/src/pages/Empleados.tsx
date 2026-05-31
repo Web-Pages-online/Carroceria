@@ -20,7 +20,7 @@ const eliminarRegistroAPI = (empleadoId: number, registroId: number) =>
   });
 
 const emptyForm   = { nombre: '', telefono: '' };
-const emptyReg    = { descripcion: '', fecha: new Date().toISOString().split('T')[0] };
+const emptyReg    = { descripcion: '', cantidad: '1', fecha: new Date().toISOString().split('T')[0] };
 
 const Empleados = () => {
   const [empleados, setEmpleados]       = useState<any[]>([]);
@@ -43,7 +43,7 @@ const Empleados = () => {
 
   const openAddRegistro = (emp: any) => {
     setRegEmpleadoId(emp.id);
-    setRegForm({ descripcion: '', fecha: new Date().toISOString().split('T')[0] });
+    setRegForm({ descripcion: '', cantidad: '1', fecha: new Date().toISOString().split('T')[0] });
     setIsRegOpen(true);
   };
 
@@ -91,7 +91,7 @@ const Empleados = () => {
     e.preventDefault();
     if (!regEmpleadoId) return;
     try {
-      await agregarRegistro(regEmpleadoId, regForm);
+      await agregarRegistro(regEmpleadoId, { ...regForm, cantidad: parseInt(regForm.cantidad) || 1 });
       setIsRegOpen(false);
       if (expandedId === regEmpleadoId) await recargarRegistros(regEmpleadoId);
       else { setExpandedId(regEmpleadoId); await recargarRegistros(regEmpleadoId); }
@@ -170,6 +170,9 @@ const Empleados = () => {
                                 <span>{fmt(r.fecha)}</span>
                               </div>
                               <p className="text-sm text-white">{r.descripcion}</p>
+                              <span className="text-xs font-semibold px-2 py-0.5 bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-full shrink-0">
+                                x{r.cantidad}
+                              </span>
                             </div>
                             <button onClick={() => handleDeleteRegistro(r.id)} className="p-1.5 text-neutral-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0 ml-2">
                               <Trash2 className="w-3.5 h-3.5" />
@@ -215,10 +218,17 @@ const Empleados = () => {
               placeholder="Ej. Caja seca 12ft, Plataforma tipo rampa..." required
               className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-1">Fecha</label>
-            <input type="date" value={regForm.fecha} onChange={e => setRegForm({ ...regForm, fecha: e.target.value })}
-              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all [color-scheme:dark]" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Cantidad</label>
+              <input type="number" min="1" step="1" value={regForm.cantidad} onChange={e => setRegForm({ ...regForm, cantidad: e.target.value })}
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Fecha</label>
+              <input type="date" value={regForm.fecha} onChange={e => setRegForm({ ...regForm, fecha: e.target.value })}
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all [color-scheme:dark]" />
+            </div>
           </div>
           <div className="pt-2 flex space-x-3">
             <button type="button" onClick={() => setIsRegOpen(false)} className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">Cancelar</button>

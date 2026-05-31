@@ -26,12 +26,13 @@ export class EmpleadoRepository {
     return prisma.empleado.delete({ where: { id } });
   }
 
-  agregarRegistro(data: { empleado_id: number; descripcion: string; fecha?: string }) {
+  agregarRegistro(data: { empleado_id: number; descripcion: string; cantidad?: number; fecha?: string }) {
     return prisma.registroTrabajo.create({
       data: {
         empleado_id: data.empleado_id,
         descripcion: data.descripcion,
-        fecha: data.fecha ? new Date(data.fecha) : undefined,
+        cantidad:    data.cantidad ?? 1,
+        fecha:       data.fecha ? new Date(data.fecha) : undefined,
       },
     });
   }
