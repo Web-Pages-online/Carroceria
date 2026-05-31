@@ -17,6 +17,7 @@ import authRoutes from './routes/authRoutes';
 import configRoutes from './routes/configRoutes';
 import usuarioRoutes from './routes/usuarioRoutes';
 import materialRoutes from './routes/materialRoutes';
+import empleadoRoutes from './routes/empleadoRoutes';
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
@@ -31,6 +32,7 @@ app.use('/api/pedidos', pedidoRoutes);
 app.use('/api/agencias', agenciaRoutes);
 app.use('/api/tipos-carroceria', tipoCarroceriaRoutes);
 app.use('/api/materiales', materialRoutes);
+app.use('/api/empleados', empleadoRoutes);
 
 // Levantar el servidor
 app.listen(PORT, () => {

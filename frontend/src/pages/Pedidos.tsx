@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, MoreVertical, Trash2, Calendar, FileText, Mail, Edit2 } from 'lucide-react';
-import { getPedidos, crearPedido, actualizarPedido, enviarReciboPorCorreo, getAgencias } from '../api/pedidos';
+import { getPedidos, crearPedido, actualizarPedido, enviarReciboPorCorreo, getAgencias, getEmpleados } from '../api/pedidos';
 import Modal from '../components/Modal';
 import Swal from 'sweetalert2';
 import axios from 'axios';
@@ -11,8 +11,9 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const Pedidos = () => {
   const [pedidos, setPedidos] = useState<any[]>([]);
-  const [agencias, setAgencias] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [agencias, setAgencias]   = useState<any[]>([]);
+  const [empleados, setEmpleados] = useState<any[]>([]);
+  const [loading, setLoading]     = useState(true);
 
   // Dropdown de fila
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
@@ -22,16 +23,17 @@ const Pedidos = () => {
   const [isEditOpen, setIsEditOpen]   = useState(false);
   const [editingId, setEditingId]     = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const emptyForm = { agencia_id: '', tipo_vehiculo: '', cantidad: '1', importe: '', ancho: '', largo: '', fecha_entrega_est: '', notas_taller: '' };
+  const emptyForm = { agencia_id: '', tipo_vehiculo: '', cantidad: '1', importe: '', ancho: '', largo: '', fecha_entrega_est: '', notas_taller: '', empleado_id: '' };
   const [form, setForm]     = useState(emptyForm);
-  const [editForm, setEditForm] = useState(emptyForm);
+  const [editForm, setEditForm]   = useState(emptyForm);
 
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      const [dataPedidos, dataAgencias] = await Promise.all([getPedidos(), getAgencias()]);
+      const [dataPedidos, dataAgencias, dataEmpleados] = await Promise.all([getPedidos(), getAgencias(), getEmpleados()]);
       setPedidos(dataPedidos);
       setAgencias(dataAgencias);
+      setEmpleados(dataEmpleados);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -102,6 +104,7 @@ const Pedidos = () => {
         largo:             form.largo             ? parseFloat(form.largo)            : undefined,
         fecha_entrega_est: form.fecha_entrega_est || undefined,
         notas_taller:      form.notas_taller     || undefined,
+        empleado_id:       form.empleado_id      ? parseInt(form.empleado_id) : undefined,
       });
       Swal.fire({
         title: 'Pedido Creado',
@@ -134,7 +137,8 @@ const Pedidos = () => {
       ancho:             pedido.ancho  != null ? pedido.ancho.toString()  : '',
       largo:             pedido.largo  != null ? pedido.largo.toString()  : '',
       fecha_entrega_est: pedido.fecha_entrega_est ? new Date(pedido.fecha_entrega_est).toISOString().split('T')[0] : '',
-      notas_taller:      pedido.notas_taller ?? '',
+      notas_taller:      pedido.notas_taller  ?? '',
+      empleado_id:       pedido.empleado_id   ? pedido.empleado_id.toString() : '',
     });
     setIsEditOpen(true);
   };
@@ -153,6 +157,7 @@ const Pedidos = () => {
         largo:             editForm.largo             ? parseFloat(editForm.largo)    : '',
         fecha_entrega_est: editForm.fecha_entrega_est || undefined,
         notas_taller:      editForm.notas_taller      || undefined,
+        empleado_id:       editForm.empleado_id       ? parseInt(editForm.empleado_id) : null,
       });
       Swal.fire({ title: 'Pedido actualizado', icon: 'success', background: '#171717', color: '#fff', confirmButtonColor: '#f97316', timer: 1800, showConfirmButton: false });
       setIsEditOpen(false);
@@ -446,6 +451,15 @@ const Pedidos = () => {
             />
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Empleado asignado</label>
+            <select value={form.empleado_id} onChange={e => setForm({ ...form, empleado_id: e.target.value })}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all">
+              <option value="">Sin asignar</option>
+              {empleados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+            </select>
+          </div>
+
           <div className="pt-2 flex space-x-3">
             <button type="button" onClick={() => setIsModalOpen(false)}
               className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">
@@ -517,6 +531,15 @@ const Pedidos = () => {
               rows={3}
               className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600 resize-none" />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Empleado asignado</label>
+            <select value={editForm.empleado_id} onChange={e => setEditForm({ ...editForm, empleado_id: e.target.value })}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all">
+              <option value="">Sin asignar</option>
+              {empleados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+            </select>
+          </div>
+
           <div className="pt-2 flex space-x-3">
             <button type="button" onClick={() => setIsEditOpen(false)}
               className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">Cancelar</button>

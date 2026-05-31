@@ -82,6 +82,13 @@ model RecetaCarroceria {
   @@unique([tipoCarroceriaId, materialId])
 }
 
+model Empleado {
+  id       Int      @id @default(autoincrement())
+  nombre   String
+  telefono String?
+  pedidos  Pedido[]
+}
+
 model Pedido {
   id                 Int             @id @default(autoincrement())
   agencia_id         Int
@@ -96,7 +103,9 @@ model Pedido {
   importe            Decimal?        @db.Decimal(10, 2)
   ancho              Float?
   largo              Float?
+  empleado_id        Int?
 
   agencia            Agencia         @relation(fields: [agencia_id], references: [id])
   tipo_carroceria    TipoCarroceria? @relation(fields: [tipo_carroceria_id], references: [id])
+  empleado           Empleado?       @relation(fields: [empleado_id], references: [id])
 }

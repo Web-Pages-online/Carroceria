@@ -86,7 +86,7 @@ export class PedidoController {
   static async actualizar(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id as string);
-      const { agencia_id, tipo_vehiculo, cantidad, importe, ancho, largo, fecha_entrega_est, notas_taller } = req.body;
+      const { agencia_id, tipo_vehiculo, cantidad, importe, ancho, largo, fecha_entrega_est, notas_taller, empleado_id } = req.body;
       const data: any = {};
       if (agencia_id        !== undefined) data.agencia_id        = Number(agencia_id);
       if (tipo_vehiculo     !== undefined) data.tipo_vehiculo     = tipo_vehiculo;
@@ -96,6 +96,7 @@ export class PedidoController {
       if (largo             !== undefined) data.largo             = largo   !== '' ? Number(largo)   : null;
       if (fecha_entrega_est !== undefined) data.fecha_entrega_est = fecha_entrega_est ? new Date(fecha_entrega_est) : null;
       if (notas_taller      !== undefined) data.notas_taller      = notas_taller;
+      if (empleado_id       !== undefined) data.empleado_id       = empleado_id ? Number(empleado_id) : null;
       res.json(await pedidoService.actualizarPedido(id, data));
     } catch (error: any) {
       res.status(400).json({ error: error.message });
