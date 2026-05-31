@@ -5,18 +5,11 @@ export class EmpleadoRepository {
     return prisma.empleado.findMany({ orderBy: { nombre: 'asc' } });
   }
 
-  findById(id: number) {
-    return prisma.empleado.findUnique({ where: { id } });
-  }
-
-  findByIdWithPedidos(id: number) {
+  findByIdWithRegistros(id: number) {
     return prisma.empleado.findUnique({
       where: { id },
       include: {
-        pedidos: {
-          include: { agencia: true, tipo_carroceria: true },
-          orderBy: { fecha_creacion: 'desc' },
-        },
+        registros: { orderBy: { fecha: 'desc' } },
       },
     });
   }
@@ -31,5 +24,19 @@ export class EmpleadoRepository {
 
   delete(id: number) {
     return prisma.empleado.delete({ where: { id } });
+  }
+
+  agregarRegistro(data: { empleado_id: number; descripcion: string; fecha?: string }) {
+    return prisma.registroTrabajo.create({
+      data: {
+        empleado_id: data.empleado_id,
+        descripcion: data.descripcion,
+        fecha: data.fecha ? new Date(data.fecha) : undefined,
+      },
+    });
+  }
+
+  eliminarRegistro(id: number) {
+    return prisma.registroTrabajo.delete({ where: { id } });
   }
 }

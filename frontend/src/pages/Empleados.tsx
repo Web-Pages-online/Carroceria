@@ -1,55 +1,80 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, User, Calendar, Building2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Calendar, ClipboardList } from 'lucide-react';
 import Modal from '../components/Modal';
 import Swal from 'sweetalert2';
 import { getEmpleados, getEmpleadoConPedidos, crearEmpleado, actualizarEmpleado, eliminarEmpleado } from '../api/pedidos';
+import api from '../api/pedidos';
 
-const emptyForm = { nombre: '', telefono: '' };
+// Helpers de registros (llaman al backend directamente)
+const agregarRegistro = (empleadoId: number, data: any) =>
+  fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/empleados/${empleadoId}/registros`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
+    body: JSON.stringify(data),
+  }).then(r => r.json());
+
+const eliminarRegistroAPI = (empleadoId: number, registroId: number) =>
+  fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/empleados/${empleadoId}/registros/${registroId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  });
+
+const emptyForm   = { nombre: '', telefono: '' };
+const emptyReg    = { descripcion: '', fecha: new Date().toISOString().split('T')[0] };
 
 const Empleados = () => {
-  const [empleados, setEmpleados] = useState<any[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId]     = useState<number | null>(null);
-  const [form, setForm]               = useState(emptyForm);
-  const [expandedId, setExpandedId]   = useState<number | null>(null);
-  const [pedidosEmpleado, setPedidosEmpleado] = useState<any[]>([]);
-  const [loadingPedidos, setLoadingPedidos]   = useState(false);
+  const [empleados, setEmpleados]       = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen]   = useState(false);
+  const [isRegOpen, setIsRegOpen]       = useState(false);
+  const [editingId, setEditingId]       = useState<number | null>(null);
+  const [regEmpleadoId, setRegEmpleadoId] = useState<number | null>(null);
+  const [form, setForm]                 = useState(emptyForm);
+  const [regForm, setRegForm]           = useState(emptyReg);
+  const [expandedId, setExpandedId]     = useState<number | null>(null);
+  const [registros, setRegistros]       = useState<any[]>([]);
+  const [loadingReg, setLoadingReg]     = useState(false);
 
-  const cargar = async () => {
-    setEmpleados(await getEmpleados());
-  };
+  const cargar = async () => setEmpleados(await getEmpleados());
 
   useEffect(() => { cargar(); }, []);
 
   const openCreate = () => { setEditingId(null); setForm(emptyForm); setIsModalOpen(true); };
-  const openEdit = (e: any) => { setEditingId(e.id); setForm({ nombre: e.nombre, telefono: e.telefono ?? '' }); setIsModalOpen(true); };
+  const openEdit   = (e: any) => { setEditingId(e.id); setForm({ nombre: e.nombre, telefono: e.telefono ?? '' }); setIsModalOpen(true); };
+
+  const openAddRegistro = (emp: any) => {
+    setRegEmpleadoId(emp.id);
+    setRegForm({ descripcion: '', fecha: new Date().toISOString().split('T')[0] });
+    setIsRegOpen(true);
+  };
 
   const toggleExpand = async (id: number) => {
     if (expandedId === id) { setExpandedId(null); return; }
     setExpandedId(id);
-    setLoadingPedidos(true);
+    setLoadingReg(true);
     const data = await getEmpleadoConPedidos(id);
-    setPedidosEmpleado(data.pedidos ?? []);
-    setLoadingPedidos(false);
+    setRegistros(data.registros ?? []);
+    setLoadingReg(false);
+  };
+
+  const recargarRegistros = async (id: number) => {
+    const data = await getEmpleadoConPedidos(id);
+    setRegistros(data.registros ?? []);
   };
 
   const handleDelete = async (id: number) => {
-    const result = await Swal.fire({
-      title: '¿Eliminar empleado?', text: 'Se quitará la asignación de sus pedidos.',
-      icon: 'warning', showCancelButton: true,
-      confirmButtonColor: '#f97316', cancelButtonColor: '#525252',
-      confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar',
-      background: '#171717', color: '#fff',
-    });
-    if (!result.isConfirmed) return;
-    try {
-      await eliminarEmpleado(id);
-      if (expandedId === id) setExpandedId(null);
-      await cargar();
-    } catch (e: any) {
-      Swal.fire({ title: 'Error', text: e.response?.data?.error || 'No se pudo eliminar', icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' });
-    }
+    const r = await Swal.fire({ title: '¿Eliminar empleado?', text: 'Se borrará también su historial.', icon: 'warning', showCancelButton: true, confirmButtonColor: '#f97316', cancelButtonColor: '#525252', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar', background: '#171717', color: '#fff' });
+    if (!r.isConfirmed) return;
+    try { await eliminarEmpleado(id); if (expandedId === id) setExpandedId(null); await cargar(); }
+    catch (e: any) { Swal.fire({ title: 'Error', text: e.response?.data?.error || 'No se pudo eliminar', icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' }); }
+  };
+
+  const handleDeleteRegistro = async (registroId: number) => {
+    if (!expandedId) return;
+    const r = await Swal.fire({ title: '¿Eliminar registro?', icon: 'warning', showCancelButton: true, confirmButtonColor: '#f97316', cancelButtonColor: '#525252', confirmButtonText: 'Sí', cancelButtonText: 'No', background: '#171717', color: '#fff' });
+    if (!r.isConfirmed) return;
+    await eliminarRegistroAPI(expandedId, registroId);
+    await recargarRegistros(expandedId);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,29 +84,30 @@ const Empleados = () => {
       else await crearEmpleado(form);
       setIsModalOpen(false);
       await cargar();
-      if (expandedId) { const data = await getEmpleadoConPedidos(expandedId); setPedidosEmpleado(data.pedidos ?? []); }
       Swal.fire({ title: '¡Guardado!', icon: 'success', background: '#171717', color: '#fff', confirmButtonColor: '#f97316', timer: 1500, showConfirmButton: false });
-    } catch (e: any) {
-      Swal.fire({ title: 'Error', text: e.response?.data?.error || 'Error al guardar', icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' });
-    }
+    } catch (e: any) { Swal.fire({ title: 'Error', text: e.response?.data?.error || 'Error al guardar', icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' }); }
   };
 
-  const fmtFecha = (d: string) =>
-    new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
-
-  const estadoBadge: Record<string, string> = {
-    PENDIENTE:  'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-    EN_PROCESO: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    TERMINADO:  'bg-green-500/10 text-green-400 border-green-500/20',
-    ENTREGADO:  'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  const handleSubmitRegistro = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regEmpleadoId) return;
+    try {
+      await agregarRegistro(regEmpleadoId, regForm);
+      setIsRegOpen(false);
+      if (expandedId === regEmpleadoId) await recargarRegistros(regEmpleadoId);
+      else { setExpandedId(regEmpleadoId); await recargarRegistros(regEmpleadoId); }
+      Swal.fire({ title: '¡Registro agregado!', icon: 'success', background: '#171717', color: '#fff', confirmButtonColor: '#f97316', timer: 1500, showConfirmButton: false });
+    } catch { Swal.fire({ title: 'Error', text: 'No se pudo agregar el registro', icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' }); }
   };
+
+  const fmt = (d: string) => new Date(d).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
 
   return (
     <div>
       <div className="mb-8 flex justify-between items-end">
         <div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Empleados</h1>
-          <p className="text-neutral-400 mt-1">Gestiona tu equipo y consulta el historial de trabajo de cada uno.</p>
+          <p className="text-neutral-400 mt-1">Registra el historial de trabajo de cada trabajador.</p>
         </div>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={openCreate}
           className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-medium flex items-center space-x-2 transition-colors shadow-lg shadow-orange-500/20">
@@ -91,14 +117,11 @@ const Empleados = () => {
 
       <div className="space-y-3">
         {empleados.length === 0 && (
-          <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl p-10 text-center text-neutral-500">
-            No hay empleados registrados
-          </div>
+          <div className="bg-neutral-900/40 border border-neutral-800 rounded-2xl p-10 text-center text-neutral-500">No hay empleados registrados</div>
         )}
 
         {empleados.map(emp => (
           <div key={emp.id} className="bg-neutral-900/40 border border-neutral-800 rounded-2xl overflow-hidden">
-            {/* Fila del empleado */}
             <div className="flex items-center justify-between px-5 py-4">
               <button onClick={() => toggleExpand(emp.id)} className="flex items-center space-x-4 flex-1 text-left group">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-orange-400 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-orange-500/20">
@@ -108,14 +131,16 @@ const Empleados = () => {
                   <p className="text-white font-semibold group-hover:text-orange-400 transition-colors">{emp.nombre}</p>
                   <p className="text-sm text-neutral-500">{emp.telefono || 'Sin teléfono'}</p>
                 </div>
-                <div className="ml-4">
-                  {expandedId === emp.id
-                    ? <ChevronUp className="w-4 h-4 text-orange-400" />
-                    : <ChevronDown className="w-4 h-4 text-neutral-500 group-hover:text-neutral-300" />}
-                </div>
+                <span className="ml-2 text-neutral-600 group-hover:text-neutral-400 transition-colors">
+                  {expandedId === emp.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </span>
               </button>
 
               <div className="flex items-center space-x-2 ml-4">
+                <button onClick={() => openAddRegistro(emp)} title="Agregar trabajo"
+                  className="p-2 text-orange-400 hover:text-orange-300 hover:bg-neutral-800 rounded-lg transition-colors">
+                  <ClipboardList className="w-4 h-4" />
+                </button>
                 <button onClick={() => openEdit(emp)} className="p-2 text-blue-400 hover:text-blue-300 hover:bg-neutral-800 rounded-lg transition-colors">
                   <Edit2 className="w-4 h-4" />
                 </button>
@@ -125,50 +150,31 @@ const Empleados = () => {
               </div>
             </div>
 
-            {/* Historial de pedidos */}
             <AnimatePresence>
               {expandedId === emp.id && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="border-t border-neutral-800 overflow-hidden"
-                >
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
+                  className="border-t border-neutral-800 overflow-hidden">
                   <div className="px-5 py-4">
-                    <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-3">
-                      Historial de trabajo
-                    </p>
+                    <p className="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-3">Historial de trabajo</p>
 
-                    {loadingPedidos ? (
-                      <div className="text-neutral-500 text-sm py-4 text-center animate-pulse">Cargando...</div>
-                    ) : pedidosEmpleado.length === 0 ? (
-                      <div className="text-neutral-600 text-sm py-4 text-center">Sin pedidos asignados aún</div>
+                    {loadingReg ? (
+                      <p className="text-neutral-500 text-sm py-3 text-center animate-pulse">Cargando...</p>
+                    ) : registros.length === 0 ? (
+                      <p className="text-neutral-600 text-sm py-3 text-center">Sin registros aún — usa el botón <span className="text-orange-400">+</span> para agregar</p>
                     ) : (
                       <div className="space-y-2">
-                        {pedidosEmpleado.map(p => (
-                          <div key={p.id} className="flex items-center justify-between py-2.5 px-3 bg-neutral-800/40 rounded-xl">
+                        {registros.map((r: any) => (
+                          <div key={r.id} className="flex items-center justify-between py-2.5 px-3 bg-neutral-800/40 rounded-xl">
                             <div className="flex items-center space-x-3">
-                              <span className="text-xs font-bold text-orange-400">#{String(p.id).padStart(4,'0')}</span>
-                              <div>
-                                <p className="text-sm text-white font-medium">
-                                  {p.tipo_vehiculo || p.tipo_carroceria?.nombre || 'Carrocería'}
-                                </p>
-                                <div className="flex items-center space-x-3 mt-0.5">
-                                  <span className="flex items-center space-x-1 text-xs text-neutral-500">
-                                    <Building2 className="w-3 h-3" />
-                                    <span>{p.agencia?.nombre ?? '—'}</span>
-                                  </span>
-                                  <span className="flex items-center space-x-1 text-xs text-neutral-500">
-                                    <Calendar className="w-3 h-3" />
-                                    <span>{fmtFecha(p.fecha_creacion)}</span>
-                                  </span>
-                                </div>
+                              <div className="flex items-center space-x-1 text-xs text-neutral-500 shrink-0">
+                                <Calendar className="w-3 h-3" />
+                                <span>{fmt(r.fecha)}</span>
                               </div>
+                              <p className="text-sm text-white">{r.descripcion}</p>
                             </div>
-                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${estadoBadge[p.estado] ?? ''}`}>
-                              {p.estado.replace('_', ' ')}
-                            </span>
+                            <button onClick={() => handleDeleteRegistro(r.id)} className="p-1.5 text-neutral-600 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors shrink-0 ml-2">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -181,27 +187,43 @@ const Empleados = () => {
         ))}
       </div>
 
+      {/* Modal empleado */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? 'Editar Empleado' : 'Nuevo Empleado'}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-neutral-400 mb-1">Nombre completo</label>
-            <input type="text" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })}
-              placeholder="Ej. Juan Pérez" required
+            <input type="text" value={form.nombre} onChange={e => setForm({ ...form, nombre: e.target.value })} placeholder="Ej. Juan Pérez" required
               className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
           </div>
           <div>
             <label className="block text-sm font-medium text-neutral-400 mb-1">Teléfono</label>
-            <input type="text" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })}
-              placeholder="Ej. 9991234567"
+            <input type="text" value={form.telefono} onChange={e => setForm({ ...form, telefono: e.target.value })} placeholder="Ej. 9991234567"
               className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
           </div>
           <div className="pt-2 flex space-x-3">
-            <button type="button" onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">Cancelar</button>
-            <button type="submit"
-              className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors">
-              {editingId ? 'Actualizar' : 'Guardar'}
-            </button>
+            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">Cancelar</button>
+            <button type="submit" className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors">{editingId ? 'Actualizar' : 'Guardar'}</button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal agregar registro */}
+      <Modal isOpen={isRegOpen} onClose={() => setIsRegOpen(false)} title="Registrar trabajo">
+        <form onSubmit={handleSubmitRegistro} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">¿Qué realizó?</label>
+            <input type="text" value={regForm.descripcion} onChange={e => setRegForm({ ...regForm, descripcion: e.target.value })}
+              placeholder="Ej. Caja seca 12ft, Plataforma tipo rampa..." required
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Fecha</label>
+            <input type="date" value={regForm.fecha} onChange={e => setRegForm({ ...regForm, fecha: e.target.value })}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all [color-scheme:dark]" />
+          </div>
+          <div className="pt-2 flex space-x-3">
+            <button type="button" onClick={() => setIsRegOpen(false)} className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">Cancelar</button>
+            <button type="submit" className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors">Guardar registro</button>
           </div>
         </form>
       </Modal>

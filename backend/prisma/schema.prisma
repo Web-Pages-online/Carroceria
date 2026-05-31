@@ -83,10 +83,18 @@ model RecetaCarroceria {
 }
 
 model Empleado {
-  id       Int      @id @default(autoincrement())
-  nombre   String
-  telefono String?
-  pedidos  Pedido[]
+  id        Int               @id @default(autoincrement())
+  nombre    String
+  telefono  String?
+  registros RegistroTrabajo[]
+}
+
+model RegistroTrabajo {
+  id          Int      @id @default(autoincrement())
+  empleado_id Int
+  descripcion String
+  fecha       DateTime @default(now())
+  empleado    Empleado @relation(fields: [empleado_id], references: [id], onDelete: Cascade)
 }
 
 model Pedido {
@@ -103,9 +111,7 @@ model Pedido {
   importe            Decimal?        @db.Decimal(10, 2)
   ancho              Float?
   largo              Float?
-  empleado_id        Int?
 
   agencia            Agencia         @relation(fields: [agencia_id], references: [id])
   tipo_carroceria    TipoCarroceria? @relation(fields: [tipo_carroceria_id], references: [id])
-  empleado           Empleado?       @relation(fields: [empleado_id], references: [id])
 }
