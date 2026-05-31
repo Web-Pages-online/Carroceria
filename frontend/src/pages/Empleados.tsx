@@ -4,7 +4,6 @@ import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Calendar, ClipboardList } 
 import Modal from '../components/Modal';
 import Swal from 'sweetalert2';
 import { getEmpleados, getEmpleadoConPedidos, crearEmpleado, actualizarEmpleado, eliminarEmpleado } from '../api/pedidos';
-import api from '../api/pedidos';
 
 // Helpers de registros (llaman al backend directamente)
 const agregarRegistro = (empleadoId: number, data: any) =>
