@@ -6,7 +6,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Swal from 'sweetalert2';
 
 const COLUMNAS = [
-  { id: 'PENDIENTE',  titulo: 'Pendientes', icono: <Clock className="w-5 h-5 text-neutral-400" />,  color: 'border-neutral-500/30' },
+  { id: 'PENDIENTE',  titulo: 'Pendientes', icono: <Clock className="w-5 h-5 text-yellow-400" />,  color: 'border-yellow-500/30' },
   { id: 'EN_PROCESO', titulo: 'En Proceso', icono: <Loader className="w-5 h-5 text-blue-400" />,    color: 'border-blue-500/30'    },
   { id: 'TERMINADO',  titulo: 'Terminados', icono: <CheckCircle className="w-5 h-5 text-green-400" />, color: 'border-green-500/30' },
   { id: 'ENTREGADO',  titulo: 'Entregados', icono: <Truck className="w-5 h-5 text-orange-400" />,   color: 'border-orange-500/30'  },
@@ -231,7 +231,7 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-800/50">
                   <div className="flex items-center space-x-2">
                     {columna.icono}
-                    <h2 className="font-semibold text-neutral-200">{columna.titulo}</h2>
+                    <h2 className={`font-semibold ${columna.id === 'PENDIENTE' ? 'text-yellow-400' : 'text-neutral-200'}`}>{columna.titulo}</h2>
                   </div>
                   <span className="bg-neutral-800 text-neutral-300 text-xs font-bold px-2 py-1 rounded-md">
                     {tarjetas.length}
