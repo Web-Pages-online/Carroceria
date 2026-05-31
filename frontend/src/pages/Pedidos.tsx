@@ -316,29 +316,6 @@ const Pedidos = () => {
             />
           </div>
 
-          {/* Cantidad e Importe en la misma fila */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-1">Cantidad</label>
-              <input
-                type="number" min="1" step="1"
-                value={form.cantidad}
-                onChange={e => setForm({ ...form, cantidad: e.target.value })}
-                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-neutral-400 mb-1">Importe acordado</label>
-              <input
-                type="number" min="0" step="0.01"
-                value={form.importe}
-                onChange={e => setForm({ ...form, importe: e.target.value })}
-                placeholder="$0.00"
-                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600"
-              />
-            </div>
-          </div>
-
           {/* Medidas */}
           <div>
             <label className="block text-sm font-medium text-neutral-400 mb-1">Medidas de la carrocería</label>
@@ -363,6 +340,29 @@ const Pedidos = () => {
                 />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">metros</span>
               </div>
+            </div>
+          </div>
+
+          {/* Cantidad e Importe en la misma fila */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Cantidad</label>
+              <input
+                type="number" min="1" step="1"
+                value={form.cantidad}
+                onChange={e => setForm({ ...form, cantidad: e.target.value })}
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Importe acordado</label>
+              <input
+                type="number" min="0" step="0.01"
+                value={form.importe}
+                onChange={e => setForm({ ...form, importe: e.target.value })}
+                placeholder="$0.00"
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600"
+              />
             </div>
           </div>
 
