@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, MoreVertical, Edit2, Trash2, Calendar, FileText } from 'lucide-react';
+import { Search, Plus, MoreVertical, Trash2, Calendar, FileText, Truck } from 'lucide-react';
 import { getPedidos, crearPedido, getAgencias, getTiposCarroceria } from '../api/pedidos';
 import Modal from '../components/Modal';
 import Swal from 'sweetalert2';
 import axios from 'axios';
+import { descargarCotizacion, descargarRecibo } from '../utils/documentos';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -193,7 +194,7 @@ const Pedidos = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right relative">
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         setOpenDropdownId(openDropdownId === pedido.id ? null : pedido.id);
@@ -202,21 +203,58 @@ const Pedidos = () => {
                     >
                       <MoreVertical className="w-5 h-5" />
                     </button>
-                    
+
                     <AnimatePresence>
                       {openDropdownId === pedido.id && (
-                        <motion.div 
+                        <motion.div
                           initial={{ opacity: 0, scale: 0.95 }}
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.95 }}
                           transition={{ duration: 0.1 }}
-                          className="absolute right-10 top-0 w-36 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-20 overflow-hidden"
+                          className="absolute right-10 top-0 w-48 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-20 overflow-hidden"
                         >
-                          <button 
-                            onClick={(e) => handleDelete(pedido.id, e)}
-                            className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-neutral-800 hover:text-red-300 flex items-center"
+                          {/* Cotización — siempre disponible */}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setOpenDropdownId(null);
+                              try {
+                                await descargarCotizacion(pedido.id);
+                              } catch (err: any) {
+                                Swal.fire({ title: 'Error', text: err.message, icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' });
+                              }
+                            }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white flex items-center gap-2"
                           >
-                            <Trash2 className="w-4 h-4 mr-2" /> Eliminar
+                            <FileText className="w-4 h-4 text-blue-400" />
+                            Cotización
+                          </button>
+
+                          {/* Recibo — solo para TERMINADO o ENTREGADO */}
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setOpenDropdownId(null);
+                              try {
+                                await descargarRecibo(pedido.id);
+                              } catch (err: any) {
+                                Swal.fire({ title: 'Error', text: err.message, icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' });
+                              }
+                            }}
+                            disabled={!['TERMINADO', 'ENTREGADO'].includes(pedido.estado)}
+                            className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-800 hover:text-white text-neutral-300"
+                          >
+                            <Truck className="w-4 h-4 text-green-400" />
+                            Recibo de entrega
+                          </button>
+
+                          <div className="border-t border-neutral-800" />
+
+                          <button
+                            onClick={(e) => handleDelete(pedido.id, e)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-neutral-800 hover:text-red-300 flex items-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" /> Eliminar
                           </button>
                         </motion.div>
                       )}
