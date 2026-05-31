@@ -30,11 +30,13 @@ async function fetchPedido(id: number) {
 export async function descargarCotizacion(pedidoId: number) {
   const pedido = await fetchPedido(pedidoId);
 
-  const precioBase = pedido.importe != null
+  const cantidad   = pedido.cantidad ?? 1;
+  const totalBruto = pedido.importe != null
     ? parseFloat(pedido.importe)
     : parseFloat(pedido.tipo_carroceria?.precio_base ?? 0);
-  const iva        = precioBase * IVA;
-  const total      = precioBase + iva;
+  const precioUnitario = cantidad > 0 ? totalBruto / cantidad : totalBruto;
+  const iva  = totalBruto * IVA;
+  const total = totalBruto + iva;
 
   const emision  = new Date();
   const vigencia = new Date(emision);
@@ -70,8 +72,10 @@ export async function descargarCotizacion(pedidoId: number) {
   y = 36;
 
   // ── Datos del cliente ────────────────────────────────────────────────────
+  const tieneEntregaEst = !!pedido.fecha_entrega_est;
+  const boxH = tieneEntregaEst ? 37 : 30;
   doc.setFillColor(...LIGHT);
-  doc.roundedRect(14, y, W - 28, 30, 2, 2, 'F');
+  doc.roundedRect(14, y, W - 28, boxH, 2, 2, 'F');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8);
@@ -90,7 +94,14 @@ export async function descargarCotizacion(pedidoId: number) {
 
   doc.setFont('helvetica', 'bold');   doc.text('Fecha emisión:', col1x, y + 25); doc.setFont('helvetica', 'normal'); doc.text(fmtDate(emision), col1x + 32, y + 25);
 
-  y += 38;
+  if (tieneEntregaEst) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Entrega estimada:', col2x, y + 25);
+    doc.setFont('helvetica', 'normal');
+    doc.text(fmtDate(new Date(pedido.fecha_entrega_est)), col2x + 38, y + 25);
+  }
+
+  y += boxH + 8;
 
   // ── Tabla de servicios ───────────────────────────────────────────────────
   doc.setFont('helvetica', 'bold');
@@ -99,16 +110,22 @@ export async function descargarCotizacion(pedidoId: number) {
   doc.text('DETALLE DEL SERVICIO', 14, y);
   y += 3;
 
+  const descripcion = [
+    pedido.tipo_vehiculo || pedido.tipo_carroceria?.nombre || 'Carrocería',
+    pedido.ancho && pedido.largo ? `Medidas: ${pedido.ancho}m ancho × ${pedido.largo}m largo` : null,
+    pedido.notas_taller ? `Notas: ${pedido.notas_taller}` : null,
+  ].filter(Boolean).join('\n');
+
   autoTable(doc, {
     startY: y,
     margin: { left: 14, right: 14 },
     head: [['#', 'Descripción', 'Cantidad', 'Precio unitario', 'Importe']],
     body: [[
       '1',
-      pedido.tipo_carroceria?.nombre ?? '—',
-      '1',
-      money(precioBase),
-      money(precioBase),
+      descripcion,
+      String(cantidad),
+      money(precioUnitario),
+      money(totalBruto),
     ]],
     headStyles:  { fillColor: ORANGE, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
     bodyStyles:  { textColor: DARK, fontSize: 9 },
@@ -130,7 +147,7 @@ export async function descargarCotizacion(pedidoId: number) {
   doc.setFontSize(9);
   doc.setTextColor(...DARK);
   doc.text('Subtotal',  txX + 4,       y + 5);
-  doc.text(money(precioBase), txX + txW - 4, y + 5, { align: 'right' });
+  doc.text(money(totalBruto), txX + txW - 4, y + 5, { align: 'right' });
 
   doc.text('IVA (16%)', txX + 4,       y + rowH + 4);
   doc.text(money(iva),  txX + txW - 4, y + rowH + 4, { align: 'right' });
