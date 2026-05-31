@@ -12,7 +12,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 const Pedidos = () => {
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [agencias, setAgencias] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
 
   // Dropdown de fila
   const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
@@ -24,7 +24,7 @@ const Pedidos = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const emptyForm = { agencia_id: '', tipo_vehiculo: '', cantidad: '1', importe: '', ancho: '', largo: '', fecha_entrega_est: '', notas_taller: '' };
   const [form, setForm]     = useState(emptyForm);
-  const [editForm, setEditForm] = useState(emptyForm);
+  const [editForm, setEditForm]   = useState(emptyForm);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -134,7 +134,7 @@ const Pedidos = () => {
       ancho:             pedido.ancho  != null ? pedido.ancho.toString()  : '',
       largo:             pedido.largo  != null ? pedido.largo.toString()  : '',
       fecha_entrega_est: pedido.fecha_entrega_est ? new Date(pedido.fecha_entrega_est).toISOString().split('T')[0] : '',
-      notas_taller:      pedido.notas_taller ?? '',
+      notas_taller:      pedido.notas_taller  ?? '',
     });
     setIsEditOpen(true);
   };

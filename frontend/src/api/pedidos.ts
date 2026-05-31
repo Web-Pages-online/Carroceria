@@ -71,6 +71,32 @@ export const eliminarTipoCarroceria = async (id: number) => {
   return response.data;
 };
 
+// Empleados
+export const getEmpleados = async () => {
+  const response = await api.get('/empleados');
+  return response.data;
+};
+
+export const getEmpleadoConPedidos = async (id: number) => {
+  const response = await api.get(`/empleados/${id}`);
+  return response.data;
+};
+
+export const crearEmpleado = async (data: any) => {
+  const response = await api.post('/empleados', data);
+  return response.data;
+};
+
+export const actualizarEmpleado = async (id: number, data: any) => {
+  const response = await api.put(`/empleados/${id}`, data);
+  return response.data;
+};
+
+export const eliminarEmpleado = async (id: number) => {
+  const response = await api.delete(`/empleados/${id}`);
+  return response.data;
+};
+
 export const enviarReciboPorCorreo = async (id: number) => {
   const response = await api.post(`/pedidos/${id}/enviar-recibo`);
   return response.data;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Home, Users, Settings, Wrench, ChevronDown, User, Shield, Key, FileText, LogOut, Package } from 'lucide-react';
+import { Home, Users, Settings, Wrench, ChevronDown, User, Shield, Key, FileText, LogOut, Package, HardHat } from 'lucide-react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -33,6 +33,7 @@ const Sidebar = () => {
         <NavItem to="/pedidos" icon={<FileText />} label="Pedidos" />
         <NavItem to="/agencias" icon={<Users />} label="Agencias" />
         <NavItem to="/inventario" icon={<Package />} label="Inventario" />
+        <NavItem to="/empleados" icon={<HardHat />} label="Empleados" />
 
         {esAdmin && (
           <div className="pt-4 mt-4 border-t border-neutral-800">

@@ -82,6 +82,22 @@ model RecetaCarroceria {
   @@unique([tipoCarroceriaId, materialId])
 }
 
+model Empleado {
+  id        Int               @id @default(autoincrement())
+  nombre    String
+  telefono  String?
+  registros RegistroTrabajo[]
+}
+
+model RegistroTrabajo {
+  id          Int      @id @default(autoincrement())
+  empleado_id Int
+  descripcion String
+  cantidad    Int      @default(1)
+  fecha       DateTime @default(now())
+  empleado    Empleado @relation(fields: [empleado_id], references: [id], onDelete: Cascade)
+}
+
 model Pedido {
   id                 Int             @id @default(autoincrement())
   agencia_id         Int
