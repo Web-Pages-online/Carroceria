@@ -1,33 +1,52 @@
 import React from 'react';
-import { Bell, Search, Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Bell, Search, Menu, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-const Topbar = () => {
+const Topbar = ({ toggleSidebar }: { toggleSidebar: () => void }) => {
+  const { usuario, logout } = useAuth();
+
   return (
-    <header className="h-20 bg-neutral-900/30 backdrop-blur-md border-b border-neutral-800 flex items-center justify-between px-8 sticky top-0 z-10">
-      <div className="flex items-center bg-neutral-800/50 rounded-full px-4 py-2 w-96 border border-neutral-700/50 focus-within:border-orange-500/50 transition-colors">
-        <Search className="w-5 h-5 text-neutral-400" />
-        <input 
-          type="text" 
-          placeholder="Buscar pedidos, agencias..." 
-          className="bg-transparent border-none outline-none text-white ml-3 w-full placeholder-neutral-500"
-        />
+    <header className="h-20 bg-neutral-900/50 backdrop-blur-xl border-b border-neutral-800/50 flex items-center justify-between px-6 sticky top-0 z-20">
+      <div className="flex items-center">
+        <button 
+          onClick={toggleSidebar}
+          className="mr-4 p-2 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors lg:hidden"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <div className="relative hidden md:block">
+          <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-500" />
+          <input 
+            type="text" 
+            placeholder="Buscar pedido, agencia..." 
+            className="pl-10 pr-4 py-2.5 bg-neutral-800/50 border border-neutral-700/50 rounded-xl text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-orange-500/50 focus:bg-neutral-800 transition-all w-64 lg:w-80"
+          />
+        </div>
       </div>
 
-      <div className="flex items-center space-x-6">
-        <button className="relative text-neutral-400 hover:text-white transition-colors">
-          <Bell className="w-6 h-6" />
-          <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-orange-500 rounded-full border-2 border-neutral-900"></span>
+      <div className="flex items-center space-x-4">
+        <button className="p-2.5 rounded-xl text-neutral-400 hover:text-white hover:bg-neutral-800 transition-colors relative">
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-orange-500 rounded-full border-2 border-neutral-900"></span>
         </button>
         
-        <div className="flex items-center space-x-3 pl-6 border-l border-neutral-700">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-orange-500 to-yellow-500 flex items-center justify-center text-white font-bold shadow-lg shadow-orange-500/20">
-            J
+        <div className="h-8 w-px bg-neutral-800 mx-2"></div>
+        
+        <div className="flex items-center space-x-3">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-medium text-white">{usuario?.nombre || 'Usuario'}</p>
+            <p className="text-xs text-neutral-500">{usuario?.rol?.nombre || usuario?.rol_nombre || 'Administrador'}</p>
           </div>
-          <div className="hidden md:block text-sm">
-            <p className="text-white font-medium">Jesús</p>
-            <p className="text-neutral-400 text-xs">Administrador</p>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-orange-400 flex items-center justify-center text-white font-bold shadow-lg shadow-orange-500/20">
+            {usuario?.nombre ? usuario.nombre.charAt(0).toUpperCase() : 'U'}
           </div>
+          <button 
+            onClick={logout}
+            className="p-2 rounded-xl text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors ml-2"
+            title="Cerrar Sesión"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
       </div>
     </header>

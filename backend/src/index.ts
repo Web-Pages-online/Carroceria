@@ -13,6 +13,9 @@ app.use(express.json());
 import pedidoRoutes from './routes/pedidoRoutes';
 import agenciaRoutes from './routes/agenciaRoutes';
 import tipoCarroceriaRoutes from './routes/tipoCarroceriaRoutes';
+import authRoutes from './routes/authRoutes';
+import configRoutes from './routes/configRoutes';
+import usuarioRoutes from './routes/usuarioRoutes';
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
@@ -20,6 +23,9 @@ app.get('/api/health', (req, res) => {
 });
 
 // Registrar rutas de la aplicación
+app.use('/api/auth', authRoutes);
+app.use('/api/config', configRoutes); // Rutas para roles y permisos
+app.use('/api/usuarios', usuarioRoutes);
 app.use('/api/pedidos', pedidoRoutes);
 app.use('/api/agencias', agenciaRoutes);
 app.use('/api/tipos-carroceria', tipoCarroceriaRoutes);

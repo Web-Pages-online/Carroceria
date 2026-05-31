@@ -5,7 +5,7 @@ import { Plus, Edit2, Trash2 } from 'lucide-react';
 import Modal from '../components/Modal';
 import Swal from 'sweetalert2';
 
-const Inventario = () => {
+const Carrocerias = () => {
   const [tipos, setTipos] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -191,4 +191,4 @@ const Inventario = () => {
   );
 };
 
-export default Inventario;
+export default Carrocerias;

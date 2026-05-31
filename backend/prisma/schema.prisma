@@ -18,9 +18,26 @@ model Usuario {
   nombre        String
   email         String   @unique
   password_hash String
-  rol           String   // Ej: "ADMIN", "GERENTE", "TALLER", "AGENCIA"
+  rol_id        Int
   agencia_id    Int?
+  
+  rol           Rol      @relation(fields: [rol_id], references: [id])
   agencia       Agencia? @relation(fields: [agencia_id], references: [id])
+}
+
+model Rol {
+  id          Int       @id @default(autoincrement())
+  nombre      String    @unique
+  descripcion String?
+  usuarios    Usuario[]
+  permisos    Permiso[] @relation("RolPermiso")
+}
+
+model Permiso {
+  id          Int      @id @default(autoincrement())
+  nombre      String   @unique
+  descripcion String?
+  roles       Rol[]    @relation("RolPermiso")
 }
 
 model Agencia {
