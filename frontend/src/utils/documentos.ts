@@ -151,15 +151,13 @@ export async function descargarCotizacion(pedidoId: number) {
   doc.setDrawColor(...DARK);
   doc.setLineWidth(0.5);
 
-  const usuarioGuardado = JSON.parse(localStorage.getItem('usuario') || '{}');
-  const nombreUsuario = usuarioGuardado?.nombre ?? pedido.agencia?.contacto ?? '—';
-
   // Bloque 1
   doc.line(14, y + 18, 14 + sigW, y + 18);
   doc.setFont('helvetica', 'bold');   doc.setFontSize(8); doc.setTextColor(...DARK);
   doc.text('Cliente', 14 + sigW / 2, y + 22, { align: 'center' });
   doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...GRAY);
-  doc.text(nombreUsuario, 14 + sigW / 2, y + 26, { align: 'center' });
+  doc.text(pedido.agencia?.contacto ?? '—', 14 + sigW / 2, y + 26, { align: 'center' });
+  doc.text(pedido.agencia?.nombre ?? '', 14 + sigW / 2, y + 30, { align: 'center' });
 
   // Bloque 2
   doc.line(sigX2, y + 18, sigX2 + sigW, y + 18);
