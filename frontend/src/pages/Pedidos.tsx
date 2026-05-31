@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, MoreVertical, Trash2, Calendar, FileText, Truck, Edit2, Mail } from 'lucide-react';
+import { Search, Plus, MoreVertical, Trash2, Calendar, FileText, Mail, Edit2 } from 'lucide-react';
 import { getPedidos, crearPedido, actualizarPedido, enviarReciboPorCorreo, getAgencias } from '../api/pedidos';
 import Modal from '../components/Modal';
 import Swal from 'sweetalert2';
 import axios from 'axios';
-import { descargarCotizacion, descargarRecibo } from '../utils/documentos';
+import { descargarCotizacion } from '../utils/documentos';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -299,24 +299,6 @@ const Pedidos = () => {
                           >
                             <FileText className="w-4 h-4 text-blue-400" />
                             Cotización
-                          </button>
-
-                          {/* Recibo — solo para TERMINADO o ENTREGADO */}
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              setOpenDropdownId(null);
-                              try {
-                                await descargarRecibo(pedido.id);
-                              } catch (err: any) {
-                                Swal.fire({ title: 'Error', text: err.message, icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' });
-                              }
-                            }}
-                            disabled={!['TERMINADO', 'ENTREGADO'].includes(pedido.estado)}
-                            className="w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-800 hover:text-white text-neutral-300"
-                          >
-                            <Truck className="w-4 h-4 text-green-400" />
-                            Recibo de entrega
                           </button>
 
                           {/* Enviar recibo por correo */}
