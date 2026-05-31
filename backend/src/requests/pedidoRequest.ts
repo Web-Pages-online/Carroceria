@@ -7,6 +7,8 @@ export const crearPedidoSchema = z.object({
   cantidad:          z.number().int().min(1).optional(),
   importe:           z.number().nonnegative().optional(),
   fecha_entrega_est: z.string().optional(),
+  ancho:             z.number().nonnegative().optional(),
+  largo:             z.number().nonnegative().optional(),
   notas_taller:      z.string().optional(),
 });
 

@@ -20,7 +20,7 @@ const Pedidos = () => {
   // Estados del Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const emptyForm = { agencia_id: '', tipo_vehiculo: '', cantidad: '1', importe: '', fecha_entrega_est: '', notas_taller: '' };
+  const emptyForm = { agencia_id: '', tipo_vehiculo: '', cantidad: '1', importe: '', ancho: '', largo: '', fecha_entrega_est: '', notas_taller: '' };
   const [form, setForm] = useState(emptyForm);
 
   const cargarDatos = async () => {
@@ -94,7 +94,9 @@ const Pedidos = () => {
         agencia_id:        parseInt(form.agencia_id),
         tipo_vehiculo:     form.tipo_vehiculo   || undefined,
         cantidad:          parseInt(form.cantidad) || 1,
-        importe:           form.importe          ? parseFloat(form.importe)   : undefined,
+        importe:           form.importe           ? parseFloat(form.importe)          : undefined,
+        ancho:             form.ancho             ? parseFloat(form.ancho)            : undefined,
+        largo:             form.largo             ? parseFloat(form.largo)            : undefined,
         fecha_entrega_est: form.fecha_entrega_est || undefined,
         notas_taller:      form.notas_taller     || undefined,
       });
@@ -334,6 +336,33 @@ const Pedidos = () => {
                 placeholder="$0.00"
                 className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600"
               />
+            </div>
+          </div>
+
+          {/* Medidas */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Medidas de la carrocería</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative">
+                <input
+                  type="number" min="0" step="0.01"
+                  value={form.ancho}
+                  onChange={e => setForm({ ...form, ancho: e.target.value })}
+                  placeholder="Ancho"
+                  className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 pr-12 outline-none focus:border-orange-500 transition-all placeholder-neutral-600"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">metros</span>
+              </div>
+              <div className="relative">
+                <input
+                  type="number" min="0" step="0.01"
+                  value={form.largo}
+                  onChange={e => setForm({ ...form, largo: e.target.value })}
+                  placeholder="Largo"
+                  className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 pr-12 outline-none focus:border-orange-500 transition-all placeholder-neutral-600"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">metros</span>
+              </div>
             </div>
           </div>
 

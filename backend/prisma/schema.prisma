@@ -91,6 +91,8 @@ model Pedido {
   tipo_vehiculo      String?
   cantidad           Int             @default(1)
   importe            Decimal?        @db.Decimal(10, 2)
+  ancho              Float?
+  largo              Float?
 
   agencia            Agencia         @relation(fields: [agencia_id], references: [id])
   tipo_carroceria    TipoCarroceria? @relation(fields: [tipo_carroceria_id], references: [id])
