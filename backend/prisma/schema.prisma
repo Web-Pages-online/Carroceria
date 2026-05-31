@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id            Int      @id @default(autoincrement())
+  nombre        String
+  email         String   @unique
+  password_hash String
+  rol           String   // Ej: "ADMIN", "GERENTE", "TALLER", "AGENCIA"
+  agencia_id    Int?
+  agencia       Agencia? @relation(fields: [agencia_id], references: [id])
+}
+
+model Agencia {
+  id        Int       @id @default(autoincrement())
+  nombre    String
+  contacto  String
+  telefono  String
+  direccion String?
+  latitud   Float?   // Para el mapa (Leaflet)
+  longitud  Float?   // Para el mapa (Leaflet)
+  usuarios  Usuario[]
+  pedidos   Pedido[]
+}
+
+model TipoCarroceria {
+  id          Int      @id @default(autoincrement())
+  nombre      String
+  descripcion String?
+  precio_base Decimal  @db.Decimal(10, 2)
+  pedidos     Pedido[]
+}
+
+model Pedido {
+  id                 Int            @id @default(autoincrement())
+  agencia_id         Int
+  tipo_carroceria_id Int
+  estado             String         @default("PENDIENTE") // PENDIENTE, EN_PROCESO, TERMINADO, ENTREGADO
+  fecha_creacion     DateTime       @default(now())
+  fecha_entrega      DateTime?
+  notas_taller       String?
+  
+  agencia            Agencia        @relation(fields: [agencia_id], references: [id])
+  tipo_carroceria    TipoCarroceria @relation(fields: [tipo_carroceria_id], references: [id])
+}
