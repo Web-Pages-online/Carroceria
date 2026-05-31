@@ -83,6 +83,25 @@ export class PedidoController {
     }
   }
 
+  static async actualizar(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id as string);
+      const { agencia_id, tipo_vehiculo, cantidad, importe, ancho, largo, fecha_entrega_est, notas_taller } = req.body;
+      const data: any = {};
+      if (agencia_id        !== undefined) data.agencia_id        = Number(agencia_id);
+      if (tipo_vehiculo     !== undefined) data.tipo_vehiculo     = tipo_vehiculo;
+      if (cantidad          !== undefined) data.cantidad          = Number(cantidad);
+      if (importe           !== undefined) data.importe           = importe !== '' ? Number(importe) : null;
+      if (ancho             !== undefined) data.ancho             = ancho   !== '' ? Number(ancho)   : null;
+      if (largo             !== undefined) data.largo             = largo   !== '' ? Number(largo)   : null;
+      if (fecha_entrega_est !== undefined) data.fecha_entrega_est = fecha_entrega_est ? new Date(fecha_entrega_est) : null;
+      if (notas_taller      !== undefined) data.notas_taller      = notas_taller;
+      res.json(await pedidoService.actualizarPedido(id, data));
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  }
+
   static async actualizarEstado(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id as string);

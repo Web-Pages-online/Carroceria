@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Plus, MoreVertical, Trash2, Calendar, FileText, Truck } from 'lucide-react';
-import { getPedidos, crearPedido, getAgencias } from '../api/pedidos';
+import { Search, Plus, MoreVertical, Trash2, Calendar, FileText, Truck, Edit2 } from 'lucide-react';
+import { getPedidos, crearPedido, actualizarPedido, getAgencias } from '../api/pedidos';
 import Modal from '../components/Modal';
 import Swal from 'sweetalert2';
 import axios from 'axios';
@@ -19,9 +19,12 @@ const Pedidos = () => {
 
   // Estados del Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen]   = useState(false);
+  const [editingId, setEditingId]     = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const emptyForm = { agencia_id: '', tipo_vehiculo: '', cantidad: '1', importe: '', ancho: '', largo: '', fecha_entrega_est: '', notas_taller: '' };
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm]     = useState(emptyForm);
+  const [editForm, setEditForm] = useState(emptyForm);
 
   const cargarDatos = async () => {
     setLoading(true);
@@ -114,6 +117,48 @@ const Pedidos = () => {
       cargarDatos();
     } catch (error: any) {
       Swal.fire('Error', error.response?.data?.error || 'No se pudo crear el pedido', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenEdit = (pedido: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpenDropdownId(null);
+    setEditingId(pedido.id);
+    setEditForm({
+      agencia_id:        pedido.agencia_id?.toString() ?? '',
+      tipo_vehiculo:     pedido.tipo_vehiculo     ?? '',
+      cantidad:          pedido.cantidad?.toString() ?? '1',
+      importe:           pedido.importe != null ? parseFloat(pedido.importe).toString() : '',
+      ancho:             pedido.ancho  != null ? pedido.ancho.toString()  : '',
+      largo:             pedido.largo  != null ? pedido.largo.toString()  : '',
+      fecha_entrega_est: pedido.fecha_entrega_est ? new Date(pedido.fecha_entrega_est).toISOString().split('T')[0] : '',
+      notas_taller:      pedido.notas_taller ?? '',
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingId) return;
+    setIsSubmitting(true);
+    try {
+      await actualizarPedido(editingId, {
+        agencia_id:        parseInt(editForm.agencia_id),
+        tipo_vehiculo:     editForm.tipo_vehiculo     || undefined,
+        cantidad:          parseInt(editForm.cantidad) || 1,
+        importe:           editForm.importe           ? parseFloat(editForm.importe)  : '',
+        ancho:             editForm.ancho             ? parseFloat(editForm.ancho)    : '',
+        largo:             editForm.largo             ? parseFloat(editForm.largo)    : '',
+        fecha_entrega_est: editForm.fecha_entrega_est || undefined,
+        notas_taller:      editForm.notas_taller      || undefined,
+      });
+      Swal.fire({ title: 'Pedido actualizado', icon: 'success', background: '#171717', color: '#fff', confirmButtonColor: '#f97316', timer: 1800, showConfirmButton: false });
+      setIsEditOpen(false);
+      cargarDatos();
+    } catch (error: any) {
+      Swal.fire('Error', error.response?.data?.error || 'No se pudo actualizar', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -228,6 +273,17 @@ const Pedidos = () => {
                           transition={{ duration: 0.1 }}
                           className="absolute right-10 top-0 w-48 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-20 overflow-hidden"
                         >
+                          {/* Editar */}
+                          <button
+                            onClick={(e) => handleOpenEdit(pedido, e)}
+                            className="w-full text-left px-4 py-2.5 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-white flex items-center gap-2"
+                          >
+                            <Edit2 className="w-4 h-4 text-orange-400" />
+                            Editar
+                          </button>
+
+                          <div className="border-t border-neutral-800" />
+
                           {/* Cotización — siempre disponible */}
                           <button
                             onClick={async (e) => {
@@ -397,6 +453,75 @@ const Pedidos = () => {
             <button type="submit" disabled={isSubmitting}
               className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-500 transition-colors disabled:opacity-50">
               {isSubmitting ? 'Guardando...' : 'Crear Pedido'}
+            </button>
+          </div>
+        </form>
+      </Modal>
+      {/* Modal editar pedido */}
+      <Modal isOpen={isEditOpen} onClose={() => setIsEditOpen(false)} title="Editar Pedido">
+        <form onSubmit={handleEditSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Agencia (Cliente)</label>
+            <select value={editForm.agencia_id} onChange={e => setEditForm({ ...editForm, agencia_id: e.target.value })}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all" required>
+              <option value="">Selecciona una agencia...</option>
+              {agencias.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Tipo de vehículo</label>
+            <input type="text" value={editForm.tipo_vehiculo} onChange={e => setEditForm({ ...editForm, tipo_vehiculo: e.target.value })}
+              placeholder="Ej. Camión de 3.5 ton, Nissan NP300..."
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Medidas de la carrocería</label>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative">
+                <input type="number" min="0" step="0.01" value={editForm.ancho} onChange={e => setEditForm({ ...editForm, ancho: e.target.value })}
+                  placeholder="Ancho"
+                  className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 pr-12 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">metros</span>
+              </div>
+              <div className="relative">
+                <input type="number" min="0" step="0.01" value={editForm.largo} onChange={e => setEditForm({ ...editForm, largo: e.target.value })}
+                  placeholder="Largo"
+                  className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 pr-12 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-neutral-500">metros</span>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Cantidad</label>
+              <input type="number" min="1" step="1" value={editForm.cantidad} onChange={e => setEditForm({ ...editForm, cantidad: e.target.value })}
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-neutral-400 mb-1">Importe acordado</label>
+              <input type="number" min="0" step="0.01" value={editForm.importe} onChange={e => setEditForm({ ...editForm, importe: e.target.value })}
+                placeholder="$0.00"
+                className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Fecha de entrega estimada</label>
+            <input type="date" value={editForm.fecha_entrega_est} onChange={e => setEditForm({ ...editForm, fecha_entrega_est: e.target.value })}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all [color-scheme:dark]" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Notas / Descripción del trabajo</label>
+            <textarea value={editForm.notas_taller} onChange={e => setEditForm({ ...editForm, notas_taller: e.target.value })}
+              placeholder="Especificaciones, medidas, color, materiales especiales..."
+              rows={3}
+              className="w-full bg-neutral-950 border border-neutral-800 text-white rounded-xl p-3 outline-none focus:border-orange-500 transition-all placeholder-neutral-600 resize-none" />
+          </div>
+          <div className="pt-2 flex space-x-3">
+            <button type="button" onClick={() => setIsEditOpen(false)}
+              className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">Cancelar</button>
+            <button type="submit" disabled={isSubmitting}
+              className="flex-1 px-4 py-3 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-500 transition-colors disabled:opacity-50">
+              {isSubmitting ? 'Guardando...' : 'Guardar cambios'}
             </button>
           </div>
         </form>

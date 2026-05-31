@@ -30,6 +30,11 @@ export class PedidoService {
     return pedido;
   }
 
+  async actualizarPedido(id: number, data: any) {
+    await this.obtenerPorId(id);
+    return await this.pedidoRepository.update(id, data);
+  }
+
   async actualizarEstado(id: number, estado: string, fecha_entrega?: string) {
     if (estado === 'ENTREGADO' && !fecha_entrega) {
       throw new Error('Un pedido entregado debe tener una fecha de entrega.');
