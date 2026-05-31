@@ -80,14 +80,18 @@ model RecetaCarroceria {
 }
 
 model Pedido {
-  id                 Int            @id @default(autoincrement())
+  id                 Int             @id @default(autoincrement())
   agencia_id         Int
-  tipo_carroceria_id Int
-  estado             String         @default("PENDIENTE") // PENDIENTE, EN_PROCESO, TERMINADO, ENTREGADO
-  fecha_creacion     DateTime       @default(now())
+  tipo_carroceria_id Int?
+  estado             String          @default("PENDIENTE") // PENDIENTE, EN_PROCESO, TERMINADO, ENTREGADO
+  fecha_creacion     DateTime        @default(now())
   fecha_entrega      DateTime?
+  fecha_entrega_est  DateTime?
   notas_taller       String?
-  
-  agencia            Agencia        @relation(fields: [agencia_id], references: [id])
-  tipo_carroceria    TipoCarroceria @relation(fields: [tipo_carroceria_id], references: [id])
+  tipo_vehiculo      String?
+  cantidad           Int             @default(1)
+  importe            Decimal?        @db.Decimal(10, 2)
+
+  agencia            Agencia         @relation(fields: [agencia_id], references: [id])
+  tipo_carroceria    TipoCarroceria? @relation(fields: [tipo_carroceria_id], references: [id])
 }

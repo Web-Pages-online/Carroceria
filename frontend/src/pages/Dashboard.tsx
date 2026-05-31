@@ -285,11 +285,16 @@ const PedidoCard = ({ pedido }: { pedido: any }) => (
       <span className="text-xs font-bold text-orange-400 tracking-wider">#{pedido.id.toString().padStart(4, '0')}</span>
       <span className="text-xs text-neutral-500">{new Date(pedido.fecha_creacion).toLocaleDateString()}</span>
     </div>
-    <h3 className="text-white font-medium mb-1">{pedido.tipo_carroceria?.nombre || 'Carrocería'}</h3>
+    <h3 className="text-white font-medium mb-1">{pedido.tipo_vehiculo || pedido.tipo_carroceria?.nombre || 'Sin descripción'}</h3>
     <p className="text-sm text-neutral-400 flex items-center">
       <span className="w-2 h-2 rounded-full bg-neutral-600 mr-2"></span>
       {pedido.agencia?.nombre || 'Agencia Desconocida'}
     </p>
+    {pedido.fecha_entrega_est && (
+      <p className="text-xs text-neutral-500 mt-1.5">
+        Entrega est.: {new Date(pedido.fecha_entrega_est).toLocaleDateString()}
+      </p>
+    )}
   </div>
 );
 

@@ -12,8 +12,8 @@ export class PedidoService {
   }
 
   async crearPedido(data: Prisma.PedidoUncheckedCreateInput) {
-    if (!data.agencia_id || !data.tipo_carroceria_id) {
-      throw new Error('La agencia y el tipo de carrocería son obligatorios.');
+    if (!data.agencia_id) {
+      throw new Error('La agencia es obligatoria.');
     }
     return await this.pedidoRepository.create(data);
   }

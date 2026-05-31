@@ -2,14 +2,12 @@ import { z } from 'zod';
 
 // Equivalente a un "CreatePedidoRequest" en otros frameworks
 export const crearPedidoSchema = z.object({
-  agencia_id: z.number({
-    required_error: 'El ID de la agencia es obligatorio',
-    invalid_type_error: 'El ID de la agencia debe ser un número',
-  }),
-  tipo_carroceria_id: z.number({
-    required_error: 'El ID del tipo de carrocería es obligatorio',
-  }),
-  notas_taller: z.string().optional(),
+  agencia_id:        z.number({ error: 'El ID de la agencia es obligatorio' }),
+  tipo_vehiculo:     z.string().optional(),
+  cantidad:          z.number().int().min(1).optional(),
+  importe:           z.number().nonnegative().optional(),
+  fecha_entrega_est: z.string().optional(),
+  notas_taller:      z.string().optional(),
 });
 
 // Equivalente a un "UpdateEstadoPedidoRequest"
