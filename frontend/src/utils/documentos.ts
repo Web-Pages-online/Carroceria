@@ -63,7 +63,7 @@ export async function descargarCotizacion(pedidoId: number) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.text(`Folio: COT-${String(pedido.id).padStart(5, '0')}`, W - 14, 17, { align: 'right' });
-  doc.text(`Vigente hasta: ${fmtDate(vigencia)}`, W - 14, 22, { align: 'right' });
+  doc.text(`Emisión: ${fmtDate(emision)}`, W - 14, 22, { align: 'right' });
 
   y = 36;
 
@@ -143,27 +143,6 @@ export async function descargarCotizacion(pedidoId: number) {
   doc.text(money(total), txX + txW - 4, y + 6, { align: 'right' });
 
   y += 16;
-
-  // ── Nota de vigencia ─────────────────────────────────────────────────────
-  doc.setFillColor(255, 248, 240);
-  doc.setDrawColor(...ORANGE);
-  doc.roundedRect(14, y, W - 28, 14, 2, 2, 'FD');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(...ORANGE);
-  doc.text('⚠  NOTA:', 18, y + 5.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...DARK);
-  doc.text(
-    `Los precios son válidos por 15 días (hasta ${fmtDate(vigencia)}). Multiservicios de Soldadura Torales se reserva el derecho`,
-    33, y + 5.5
-  );
-  doc.text(
-    'de ajustar los precios si el diseño sufre modificaciones o hay variación en el costo del acero y materiales.',
-    18, y + 10.5
-  );
-
-  y += 22;
 
   // ── Firmas ───────────────────────────────────────────────────────────────
   const sigW = (W - 28 - 20) / 2;
