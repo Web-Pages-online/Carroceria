@@ -44,7 +44,7 @@ const Agencias = () => {
   const [agencias, setAgencias] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState({ nombre: '', contacto: '', telefono: '', direccion: '' });
+  const [form, setForm] = useState({ nombre: '', contacto: '', email: '', telefono: '', direccion: '' });
   
   // Estado del mapa
   const [position, setPosition] = useState<L.LatLng | null>(null);
@@ -63,7 +63,7 @@ const Agencias = () => {
 
   const openCreateModal = () => {
     setEditingId(null);
-    setForm({ nombre: '', contacto: '', telefono: '', direccion: '' });
+    setForm({ nombre: '', contacto: '', email: '', telefono: '', direccion: '' });
     setPosition(null);
     setMapCenter(null);
     setSearchQuery('');
@@ -75,6 +75,7 @@ const Agencias = () => {
     setForm({
       nombre: agencia.nombre,
       contacto: agencia.contacto || '',
+      email: agencia.email || '',
       telefono: agencia.telefono || '',
       direccion: agencia.direccion || ''
     });
@@ -318,6 +319,11 @@ const Agencias = () => {
               <label className="block text-sm font-medium text-neutral-400 mb-1">Dirección (Texto)</label>
               <input type="text" value={form.direccion} onChange={e => setForm({...form, direccion: e.target.value})} className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-lg p-3 outline-none focus:border-orange-500 transition-colors" />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Correo electrónico <span className="text-neutral-600">(para envío de recibos)</span></label>
+            <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="contacto@agencia.com" className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-lg p-3 outline-none focus:border-orange-500 transition-colors placeholder-neutral-600" />
           </div>
 
           <div className="mt-4">

@@ -114,6 +114,96 @@ export class PedidoController {
     }
   }
 
+  static async enviarRecibo(req: Request, res: Response) {
+    try {
+      const id = parseInt(req.params.id as string);
+      const pedido = await pedidoService.obtenerPorId(id) as any;
+
+      if (!['TERMINADO', 'ENTREGADO'].includes(pedido.estado)) {
+        return res.status(400).json({ error: 'Solo se puede enviar el recibo de pedidos terminados o entregados.' });
+      }
+
+      const email = pedido.agencia?.email;
+      if (!email) {
+        return res.status(400).json({ error: 'La agencia no tiene correo electrónico registrado. Agrégalo en el módulo de Agencias.' });
+      }
+
+      const { enviarCorreo } = await import('../utils/mailer');
+
+      const precioBase = pedido.importe != null
+        ? parseFloat(pedido.importe)
+        : parseFloat(pedido.tipo_carroceria?.precio_base ?? 0);
+      const iva   = precioBase * IVA;
+      const total = precioBase + iva;
+
+      const fechaEntrega = pedido.fecha_entrega ? new Date(pedido.fecha_entrega) : new Date();
+      const fmt = (d: Date) => d.toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' });
+      const fmtHora = (d: Date) => d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+      const descripcion = [
+        pedido.tipo_vehiculo || pedido.tipo_carroceria?.nombre || 'Carrocería',
+        pedido.ancho && pedido.largo ? `Medidas: ${pedido.ancho}m × ${pedido.largo}m` : null,
+        pedido.notas_taller ? `Notas: ${pedido.notas_taller}` : null,
+      ].filter(Boolean).join('<br/>');
+
+      const htmlBody = `
+      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e5e5e5;border-radius:8px;overflow:hidden">
+        <div style="background:#f97316;padding:24px 28px">
+          <h1 style="color:#fff;margin:0;font-size:20px">MULTISERVICIOS DE SOLDADURA TORALES</h1>
+          <p style="color:#fff;margin:4px 0 0;font-size:12px;opacity:0.9">Fabricación profesional de carrocerías</p>
+        </div>
+
+        <div style="padding:24px 28px;background:#fff">
+          <h2 style="color:#f97316;font-size:16px;margin:0 0 4px">Recibo de Entrega</h2>
+          <p style="color:#777;font-size:12px;margin:0 0 20px">Folio SAL-${String(pedido.id).padStart(5,'0')} · ${fmt(fechaEntrega)} ${fmtHora(fechaEntrega)}</p>
+
+          <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+            <tr style="background:#f5f5f5">
+              <th style="padding:8px 12px;text-align:left;font-size:11px;text-transform:uppercase;color:#f97316">Descripción</th>
+              <th style="padding:8px 12px;text-align:right;font-size:11px;text-transform:uppercase;color:#f97316">Importe</th>
+            </tr>
+            <tr>
+              <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #f0f0f0">${descripcion}</td>
+              <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid #f0f0f0;text-align:right">${formatMoney(total)}</td>
+            </tr>
+          </table>
+
+          <div style="background:#f5f5f5;padding:12px 16px;border-radius:6px;margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px">
+              <span>Subtotal</span><span>${formatMoney(precioBase)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px">
+              <span>IVA (16%)</span><span>${formatMoney(iva)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:bold;color:#f97316;border-top:2px solid #f97316;padding-top:8px">
+              <span>TOTAL</span><span>${formatMoney(total)}</span>
+            </div>
+          </div>
+
+          <div style="background:#fff8f0;border-left:4px solid #f97316;padding:10px 14px;font-size:12px;color:#555;margin-bottom:20px;border-radius:0 4px 4px 0">
+            La carrocería descrita ha sido fabricada conforme a las especificaciones acordadas y se entrega en condiciones óptimas.
+          </div>
+
+          <p style="font-size:12px;color:#999;margin:0">Para cualquier aclaración comuníquese con nosotros.</p>
+        </div>
+
+        <div style="background:#f97316;padding:12px 28px;text-align:center">
+          <p style="color:#fff;font-size:11px;margin:0">Folio SAL-${String(pedido.id).padStart(5,'0')} · Multiservicios de Soldadura Torales</p>
+        </div>
+      </div>`;
+
+      await enviarCorreo({
+        to:      email,
+        subject: `Recibo de Entrega SAL-${String(pedido.id).padStart(5,'0')} — ${pedido.agencia?.nombre}`,
+        html:    htmlBody,
+      });
+
+      res.json({ ok: true, message: `Recibo enviado a ${email}` });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'No se pudo enviar el correo' });
+    }
+  }
+
   static async eliminar(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id as string);

@@ -44,10 +44,11 @@ model Agencia {
   id        Int       @id @default(autoincrement())
   nombre    String
   contacto  String
+  email     String?
   telefono  String
   direccion String?
-  latitud   Float?   // Para el mapa (Leaflet)
-  longitud  Float?   // Para el mapa (Leaflet)
+  latitud   Float?
+  longitud  Float?
   usuarios  Usuario[]
   pedidos   Pedido[]
 }

@@ -71,6 +71,11 @@ export const eliminarTipoCarroceria = async (id: number) => {
   return response.data;
 };
 
+export const enviarReciboPorCorreo = async (id: number) => {
+  const response = await api.post(`/pedidos/${id}/enviar-recibo`);
+  return response.data;
+};
+
 export const actualizarPedido = async (id: number, data: any) => {
   const response = await api.put(`/pedidos/${id}`, data);
   return response.data;
