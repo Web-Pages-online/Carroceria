@@ -322,7 +322,7 @@ const Agencias = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-1">Correo electrónico <span className="text-neutral-600">(para envío de recibos)</span></label>
+            <label className="block text-sm font-medium text-neutral-400 mb-1">Correo electrónico</label>
             <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} placeholder="contacto@agencia.com" className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-lg p-3 outline-none focus:border-orange-500 transition-colors placeholder-neutral-600" />
           </div>
 
