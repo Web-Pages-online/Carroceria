@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Users from './pages/settings/Users';
 import Roles from './pages/settings/Roles';
 import Permisos from './pages/settings/Permisos';
+import Perfil from './pages/Perfil';
 import { useAuth } from './context/AuthContext';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -38,6 +39,8 @@ function App() {
         <Route path="/pedidos" element={<ProtectedRoute><Pedidos /></ProtectedRoute>} />
         <Route path="/agencias" element={<ProtectedRoute><Agencias /></ProtectedRoute>} />
         
+        <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
+
         {/* Settings Routes - Solo Admin */}
         <Route path="/settings/users" element={<AdminRoute><Users /></AdminRoute>} />
         <Route path="/settings/roles" element={<AdminRoute><Roles /></AdminRoute>} />

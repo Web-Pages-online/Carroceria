@@ -64,14 +64,19 @@ const Sidebar = () => {
       {/* Sección de usuario al fondo */}
       <div className="px-4 py-4 border-t border-neutral-800 mt-auto">
         <div className="flex items-center space-x-3">
-          <div className="text-left flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">{usuario?.nombre || 'Usuario'}</p>
-            <p className="text-xs text-neutral-500 truncate">{usuario?.rol?.nombre || usuario?.rol_nombre || 'Rol'}</p>
-          </div>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-orange-400 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-orange-500/20">
-            {usuario?.nombre ? usuario.nombre.charAt(0).toUpperCase() : 'U'}
-          </div>
-          <button 
+          <NavLink
+            to="/perfil"
+            className="flex items-center space-x-3 flex-1 min-w-0 p-2 rounded-xl hover:bg-neutral-800/60 transition-colors group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-orange-500 to-orange-400 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-lg shadow-orange-500/20">
+              {usuario?.nombre ? usuario.nombre.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div className="text-left min-w-0">
+              <p className="text-sm font-medium text-white truncate group-hover:text-orange-400 transition-colors">{usuario?.nombre || 'Usuario'}</p>
+              <p className="text-xs text-neutral-500 truncate">{usuario?.rol?.nombre || usuario?.rol_nombre || 'Rol'}</p>
+            </div>
+          </NavLink>
+          <button
             onClick={logout}
             className="p-2 rounded-xl text-neutral-400 hover:text-red-400 hover:bg-red-500/10 transition-colors shrink-0"
             title="Cerrar Sesión"
