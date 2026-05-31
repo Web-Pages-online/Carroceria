@@ -117,18 +117,34 @@ const Dashboard = () => {
           showConfirmButton: false
         });
       }
-    } catch (err) {
-      // Revertir si falla
+    } catch (err: any) {
+      // Revertir estado optimista
       newPedidos[pedidoIndex].estado = oldState;
       setPedidos([...newPedidos]);
-      Swal.fire({
-        title: 'Error',
-        text: 'No se pudo actualizar el estado',
-        icon: 'error',
-        background: '#171717',
-        color: '#fff',
-        confirmButtonColor: '#f97316'
-      });
+
+      const faltantes = err?.response?.data?.faltantes;
+      if (faltantes && faltantes.length > 0) {
+        const lista = faltantes
+          .map((f: any) => `• <b>${f.material}</b>: necesita ${f.necesario} ${f.unidad}, disponible ${f.disponible}`)
+          .join('<br/>');
+        Swal.fire({
+          title: 'Stock insuficiente',
+          html: `No hay suficiente material para iniciar esta carrocería:<br/><br/>${lista}`,
+          icon: 'warning',
+          background: '#171717',
+          color: '#fff',
+          confirmButtonColor: '#f97316',
+        });
+      } else {
+        Swal.fire({
+          title: 'Error',
+          text: err?.response?.data?.error || 'No se pudo actualizar el estado',
+          icon: 'error',
+          background: '#171717',
+          color: '#fff',
+          confirmButtonColor: '#f97316',
+        });
+      }
     }
   };
 

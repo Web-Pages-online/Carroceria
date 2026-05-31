@@ -39,7 +39,8 @@ export class PedidoController {
       const pedidoActualizado = await pedidoService.actualizarEstado(id, estado, fecha_entrega);
       res.json(pedidoActualizado);
     } catch (error: any) {
-      res.status(400).json({ error: error.message });
+      const status = error.status || 400;
+      res.status(status).json({ error: error.message, faltantes: error.faltantes });
     }
   }
 
