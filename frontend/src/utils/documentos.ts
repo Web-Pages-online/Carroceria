@@ -142,11 +142,11 @@ export async function descargarCotizacion(pedidoId: number) {
   doc.text('TOTAL',      txX + 4,       y + 6);
   doc.text(money(total), txX + txW - 4, y + 6, { align: 'right' });
 
-  y += 16;
-
-  // ── Firmas ───────────────────────────────────────────────────────────────
+  // ── Firmas — fijadas al fondo de la página ───────────────────────────────
+  const pageH = doc.internal.pageSize.getHeight();
   const sigW = (W - 28 - 20) / 2;
   const sigX2 = 14 + sigW + 20;
+  y = pageH - 36; // posición fija cerca del pie
 
   doc.setDrawColor(...DARK);
   doc.setLineWidth(0.5);
@@ -167,7 +167,6 @@ export async function descargarCotizacion(pedidoId: number) {
   doc.text('Multiservicios de Soldadura Torales', sigX2 + sigW / 2, y + 26, { align: 'center' });
 
   // ── Pie de página ─────────────────────────────────────────────────────────
-  const pageH = doc.internal.pageSize.getHeight();
   doc.setFillColor(...ORANGE);
   doc.rect(0, pageH - 8, W, 8, 'F');
   doc.setFont('helvetica', 'normal');
