@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Clock, Loader, CheckCircle, Truck, AlertCircle, Plus, Filter, X, ChevronDown, Search } from 'lucide-react';
-import { getPedidos, crearPedido, getAgencias, getTiposCarroceria, actualizarEstadoPedido } from '../api/pedidos';
-import Modal from '../components/Modal';
+import { getPedidos, getAgencias, getTiposCarroceria, actualizarEstadoPedido } from '../api/pedidos';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import Swal from 'sweetalert2';
 
@@ -21,9 +21,7 @@ const Dashboard = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError]       = useState('');
 
-  const [isModalOpen, setIsModalOpen]   = useState(false);
-  const [form, setForm]                 = useState({ agencia_id: '', tipo_carroceria_id: '' });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const [filtros, setFiltros]         = useState(emptyFiltros);
   const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
@@ -75,23 +73,6 @@ const Dashboard = () => {
 
   useEffect(() => { cargarDatos(); }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.agencia_id || !form.tipo_carroceria_id) return;
-    setIsSubmitting(true);
-    try {
-      await crearPedido({ agencia_id: parseInt(form.agencia_id), tipo_carroceria_id: parseInt(form.tipo_carroceria_id) });
-      setIsModalOpen(false);
-      setForm({ agencia_id: '', tipo_carroceria_id: '' });
-      await cargarDatos();
-      Swal.fire({ title: '¡Pedido Creado!', icon: 'success', background: '#171717', color: '#fff', confirmButtonColor: '#f97316', timer: 2000, showConfirmButton: false });
-    } catch {
-      Swal.fire({ title: 'Error', text: 'Ocurrió un error al crear el pedido.', icon: 'error', background: '#171717', color: '#fff', confirmButtonColor: '#f97316' });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const onDragEnd = async (result: any) => {
     if (!result.destination) return;
     const sourceCol = result.source.droppableId;
@@ -136,7 +117,7 @@ const Dashboard = () => {
           <p className="text-neutral-400 mt-1">Supervisa el estado de todas las carrocerías en el taller y mueve las tarjetas.</p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => navigate('/pedidos')}
           className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl font-medium flex items-center space-x-2 transition-colors shadow-lg shadow-orange-500/20 shrink-0"
         >
           <Plus className="w-5 h-5" />
@@ -294,45 +275,6 @@ const Dashboard = () => {
         </div>
       </DragDropContext>
 
-      {/* Modal nuevo pedido */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Nuevo Pedido">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-1">Agencia</label>
-            <select
-              value={form.agencia_id}
-              onChange={e => setForm({ ...form, agencia_id: e.target.value })}
-              className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-lg p-3 outline-none focus:border-orange-500 transition-colors"
-              required
-            >
-              <option value="">Seleccionar agencia...</option>
-              {agencias.map(a => <option key={a.id} value={a.id}>{a.nombre}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-neutral-400 mb-1">Tipo de Carrocería</label>
-            <select
-              value={form.tipo_carroceria_id}
-              onChange={e => setForm({ ...form, tipo_carroceria_id: e.target.value })}
-              className="w-full bg-neutral-800 border border-neutral-700 text-white rounded-lg p-3 outline-none focus:border-orange-500 transition-colors"
-              required
-            >
-              <option value="">Seleccionar tipo...</option>
-              {tipos.map(t => <option key={t.id} value={t.id}>{t.nombre}</option>)}
-            </select>
-          </div>
-          <div className="pt-4 flex space-x-3">
-            <button type="button" onClick={() => setIsModalOpen(false)}
-              className="flex-1 px-4 py-3 bg-neutral-800 text-white rounded-xl font-medium hover:bg-neutral-700 transition-colors">
-              Cancelar
-            </button>
-            <button type="submit" disabled={isSubmitting}
-              className="flex-1 px-4 py-3 bg-orange-500 text-white rounded-xl font-medium hover:bg-orange-600 transition-colors disabled:opacity-50">
-              {isSubmitting ? 'Creando...' : 'Crear Pedido'}
-            </button>
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 };
