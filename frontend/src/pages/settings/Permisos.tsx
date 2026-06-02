@@ -96,8 +96,7 @@ const Permisos = () => {
       if (editingPermisoId) {
         await api.put(`/config/permisos/${editingPermisoId}`, form);
       } else {
-        await api.post('/config/permisos', form
-        });
+        await api.post('/config/permisos', form);
       }
       
       Swal.fire({
