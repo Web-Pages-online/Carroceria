@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, MoreVertical, Plus, User as UserIcon, Edit2, Trash2 } from 'lucide-react';
-import axios from 'axios';
 import Modal from '../../components/Modal';
 import Swal from 'sweetalert2';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import api from '../../api/pedidos';
 
 const Users = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -31,10 +29,7 @@ const Users = () => {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const { data } = await axios.get(`${API_URL}/usuarios`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await api.get('/usuarios');
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -45,11 +40,9 @@ const Users = () => {
 
   const fetchDependencies = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
       const [resRoles, resAgencias] = await Promise.all([
-        axios.get(`${API_URL}/config/roles`, config),
-        axios.get(`${API_URL}/agencias`, config)
+        api.get('/config/roles'),
+        api.get('/agencias')
       ]);
       setRoles(resRoles.data);
       setAgencias(resAgencias.data);
@@ -106,10 +99,7 @@ const Users = () => {
 
     if (result.isConfirmed) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`${API_URL}/usuarios/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.delete(`/usuarios/${id}`);
         Swal.fire({
           title: 'Eliminado',
           text: 'El usuario ha sido eliminado.',
@@ -129,7 +119,6 @@ const Users = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
       const payload: any = {
         nombre: form.nombre,
         email: form.email,
@@ -146,13 +135,9 @@ const Users = () => {
       }
 
       if (editingUserId) {
-        await axios.put(`${API_URL}/usuarios/${editingUserId}`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.put(`/usuarios/${editingUserId}`, payload);
       } else {
-        await axios.post(`${API_URL}/usuarios`, payload, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.post('/usuarios', payload);
       }
       
       Swal.fire({

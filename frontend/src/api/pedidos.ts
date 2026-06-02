@@ -7,6 +7,8 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+export default api;
+
 // Interceptor para agregar el token a todas las peticiones
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');

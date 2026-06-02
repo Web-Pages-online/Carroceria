@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Edit2, Trash2, Plus, Search } from 'lucide-react';
-import axios from 'axios';
 import Modal from '../../components/Modal';
 import Swal from 'sweetalert2';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import api from '../../api/pedidos';
 
 const Roles = () => {
   const [roles, setRoles] = useState<any[]>([]);
@@ -19,10 +17,7 @@ const Roles = () => {
 
   const fetchRoles = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const { data } = await axios.get(`${API_URL}/config/roles`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await api.get('/config/roles');
       setRoles(data);
     } catch (error) {
       console.error('Error fetching roles:', error);
@@ -66,10 +61,7 @@ const Roles = () => {
 
     if (result.isConfirmed) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`${API_URL}/config/roles/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.delete(`/config/roles/${id}`);
         Swal.fire({
           title: 'Eliminado',
           text: 'El rol ha sido eliminado.',
@@ -89,15 +81,10 @@ const Roles = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
       if (editingRoleId) {
-        await axios.put(`${API_URL}/config/roles/${editingRoleId}`, form, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.put(`/config/roles/${editingRoleId}`, form);
       } else {
-        await axios.post(`${API_URL}/config/roles`, form, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.post('/config/roles', form);
       }
       Swal.fire({ 
         title: editingRoleId ? 'Rol Actualizado' : 'Rol Creado', 

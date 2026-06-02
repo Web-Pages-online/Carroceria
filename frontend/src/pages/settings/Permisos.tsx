@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Key, Search, MoreVertical, Plus, Edit2, Trash2 } from 'lucide-react';
-import axios from 'axios';
 import Modal from '../../components/Modal';
 import Swal from 'sweetalert2';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import api from '../../api/pedidos';
 
 const Permisos = () => {
   const [permisos, setPermisos] = useState<any[]>([]);
@@ -22,10 +20,7 @@ const Permisos = () => {
 
   const fetchPermisos = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const { data } = await axios.get(`${API_URL}/config/permisos`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data } = await api.get('/config/permisos');
       setPermisos(data);
     } catch (error) {
       console.error("Error fetching permissions:", error);
@@ -78,10 +73,7 @@ const Permisos = () => {
 
     if (result.isConfirmed) {
       try {
-        const token = localStorage.getItem('token');
-        await axios.delete(`${API_URL}/config/permisos/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.delete(`/config/permisos/${id}`);
         Swal.fire({
           title: 'Eliminado',
           text: 'El permiso ha sido eliminado.',
@@ -101,14 +93,10 @@ const Permisos = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem('token');
       if (editingPermisoId) {
-        await axios.put(`${API_URL}/config/permisos/${editingPermisoId}`, form, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await api.put(`/config/permisos/${editingPermisoId}`, form);
       } else {
-        await axios.post(`${API_URL}/config/permisos`, form, {
-          headers: { Authorization: `Bearer ${token}` }
+        await api.post('/config/permisos', form
         });
       }
       
