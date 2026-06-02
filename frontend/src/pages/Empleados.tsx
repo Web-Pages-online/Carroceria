@@ -4,20 +4,13 @@ import { Plus, Edit2, Trash2, ChevronDown, ChevronUp, Calendar, ClipboardList } 
 import Modal from '../components/Modal';
 import Swal from 'sweetalert2';
 import { getEmpleados, getEmpleadoConPedidos, crearEmpleado, actualizarEmpleado, eliminarEmpleado } from '../api/pedidos';
+import api from '../api/pedidos';
 
-// Helpers de registros (llaman al backend directamente)
 const agregarRegistro = (empleadoId: number, data: any) =>
-  fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/empleados/${empleadoId}/registros`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
-    body: JSON.stringify(data),
-  }).then(r => r.json());
+  api.post(`/empleados/${empleadoId}/registros`, data).then(r => r.data);
 
 const eliminarRegistroAPI = (empleadoId: number, registroId: number) =>
-  fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/empleados/${empleadoId}/registros/${registroId}`, {
-    method: 'DELETE',
-    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-  });
+  api.delete(`/empleados/${empleadoId}/registros/${registroId}`);
 
 const emptyForm   = { nombre: '', telefono: '' };
 const emptyReg    = { descripcion: '', cantidad: '1', fecha: new Date().toISOString().split('T')[0] };
